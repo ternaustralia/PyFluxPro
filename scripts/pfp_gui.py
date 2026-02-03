@@ -2488,6 +2488,7 @@ class edit_cfg_L2(QtWidgets.QWidget):
     def __init__(self, main_gui):
         super(edit_cfg_L2, self).__init__()
         self.cfg = copy.deepcopy(main_gui.file)
+        self.main_gui = main_gui
         self.tabs = main_gui.tabs
         self.edit_L2_gui()
 
@@ -3061,11 +3062,19 @@ class edit_cfg_L2(QtWidgets.QWidget):
                     self.context_menu.actionBrowseInputFile.setText("Browse...")
                     self.context_menu.addAction(self.context_menu.actionBrowseInputFile)
                     self.context_menu.actionBrowseInputFile.triggered.connect(self.browse_input_file)
+                    self.context_menu.actionOpenInputFile = QtWidgets.QAction(self)
+                    self.context_menu.actionOpenInputFile.setText("Open...")
+                    self.context_menu.addAction(self.context_menu.actionOpenInputFile)
+                    self.context_menu.actionOpenInputFile.triggered.connect(self.open_netcdf_file)
                 elif key == "out_filename":
                     self.context_menu.actionBrowseOutputFile = QtWidgets.QAction(self)
                     self.context_menu.actionBrowseOutputFile.setText("Browse...")
                     self.context_menu.addAction(self.context_menu.actionBrowseOutputFile)
                     self.context_menu.actionBrowseOutputFile.triggered.connect(self.browse_output_file)
+                    self.context_menu.actionOpenOutputFile = QtWidgets.QAction(self)
+                    self.context_menu.actionOpenOutputFile.setText("Open...")
+                    self.context_menu.addAction(self.context_menu.actionOpenOutputFile)
+                    self.context_menu.actionOpenOutputFile.triggered.connect(self.open_netcdf_file)
                 elif key == "plot_path":
                     self.context_menu.actionBrowsePlotPath = QtWidgets.QAction(self)
                     self.context_menu.actionBrowsePlotPath.setText("Browse...")
@@ -3513,6 +3522,19 @@ class edit_cfg_L2(QtWidgets.QWidget):
         self.update_tab_text()
         # update the control file contents
         self.cfg = self.get_data_from_model()
+
+    def open_netcdf_file(self):
+        idx = self.view.selectedIndexes()[0]
+        selected_item = idx.model().itemFromIndex(idx)
+        if len(selected_item.text()) == 0:
+            return
+        file_path = self.cfg["Files"]["file_path"]
+        file_name = selected_item.text()
+        file_uri = os.path.join(file_path, file_name)
+        if not os.path.isfile(file_uri):
+            return
+        self.main_gui.file_open(file_uri=file_uri)
+        return
 
     def pick_excludedaterange(self):
         self.cfg = self.get_data_from_model()
