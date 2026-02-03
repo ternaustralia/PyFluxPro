@@ -543,42 +543,56 @@ def do_EPQCFlagCheck(cf, ds, section, series, code=9):
     return
 
 def do_excludedates(cf,ds,section,series,code=6):
+    """
+    Purpose:
+     Mask data within a date range specified for a variable in the control file.
+     This is a rewrite of the previous version to make it more robust.
+    Usage:
+     do_excludedates(cf, ds, section, series, code=6)
+     where cf is the control file
+           ds is the data structure
+           section is the section in the control file e.g. "Variables"
+           series is the variable label in ds
+           code is the QC flag code for excluded data
+    Side effects:
+     Changes the data for this variable in the data structure.
+    Author: PRI
+    Date: February 2026
+    """
     if 'ExcludeDates' not in list(cf[section][series].keys()):
         return
+    nrecs = int(ds.root["Attributes"]["nc_nrecs"])
     ldt = ds.root["Variables"]['DateTime']['Data']
-    ExcludeList = list(cf[section][series]['ExcludeDates'].keys())
-    NumExclude = len(ExcludeList)
-    for i in range(NumExclude):
+    exclude_list = list(cf[section][series]['ExcludeDates'].keys())
+    num_exclude = len(exclude_list)
+    for i in range(num_exclude):
         exclude_dates_string = cf[section][series]['ExcludeDates'][str(i)]
+        if exclude_dates_string == "YYYY-mm-dd HH:MM,YYYY-mm-dd HH:MM":
+            continue
         exclude_dates_list = exclude_dates_string.split(",")
-        if len(exclude_dates_list) == 1:
-            try:
-                dt = datetime.datetime.strptime(exclude_dates_list[0].strip(),'%Y-%m-%d %H:%M')
-                si = pfp_utils.find_nearest_value(ldt, dt)
-                ei = si + 1
-            except ValueError:
-                si = 0
-                ei = -1
-        elif len(exclude_dates_list) == 2:
-            try:
-                dt = datetime.datetime.strptime(exclude_dates_list[0].strip(),'%Y-%m-%d %H:%M')
-                si = pfp_utils.find_nearest_value(ldt, dt)
-            except ValueError:
-                si = 0
-            try:
-                dt = datetime.datetime.strptime(exclude_dates_list[1].strip(),'%Y-%m-%d %H:%M')
-                ei = pfp_utils.find_nearest_value(ldt, dt)
-            except ValueError:
-                ei = -1
-            if si == ei:
-                ei = si + 1
-        else:
-            msg = "ExcludeDates: bad date string ("+exclude_dates_string+"), skipping ..."
+        if len(exclude_dates_list) != 2:
+            msg = " ExcludeDates range does not contain 2 entries"
             logger.warning(msg)
-            return
-        ds.root["Variables"][series]['Data'][si:ei] = numpy.float64(c.missing_value)
-        ds.root["Variables"][series]['Flag'][si:ei] = numpy.int32(code)
-        ds.root["Variables"][series]['Attr']['ExcludeDates_'+str(i)] = cf[section][series]['ExcludeDates'][str(i)]
+            continue
+        idx = []
+        try:
+            for j in range(len(exclude_dates_list)):
+                dt = datetime.datetime.strptime(exclude_dates_list[j].strip(),'%Y-%m-%d %H:%M')
+                ix = pfp_utils.find_nearest_value(ldt, dt)
+                ix = max([0, min([ix, nrecs - 1])])
+                idx.append(ix)
+        except ValueError:
+            msg = " Unable to get ExcludeDate range from " + exclude_dates_string + ", ignoring ..."
+            logger.warning(msg)
+            continue
+        # mask points in the date range
+        if len(idx) == 2:
+            idx = [min(idx), max(idx)]
+            # PRI is allowed to do direct writes to the data structure
+            # everyone else has to use pfp_utils.GetVariable()/pfp_utils.CreateVariable()
+            ds.root["Variables"][series]['Data'][idx[0]:idx[1] + 1] = numpy.float64(c.missing_value)
+            ds.root["Variables"][series]['Flag'][idx[0]:idx[1] + 1] = numpy.int32(code)
+            ds.root["Variables"][series]['Attr']['ExcludeDates_'+str(i)] = cf[section][series]['ExcludeDates'][str(i)]
     return
 
 def do_excludehours(cf,ds,section,series,code=7):

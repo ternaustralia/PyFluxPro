@@ -8,7 +8,8 @@ import traceback
 # 3rd party modules
 from configobj import ConfigObj
 import matplotlib.pyplot as plt
-from matplotlib.widgets import Button
+import matplotlib.dates as mdates
+from matplotlib.widgets import Button,  SpanSelector
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
@@ -302,7 +303,7 @@ class file_explore(QtWidgets.QWidget):
         selected_item = idx.model().itemFromIndex(idx)
         # get the parent of the selected item
         parent = selected_item.parent()
-        
+
         ## construct the new variable dictionary
         #new_var = {"xl":{"sheet":"", "name":""},
                    #"Attr":{"height": "", "instrument": "", "long_name": "",
@@ -310,10 +311,10 @@ class file_explore(QtWidgets.QWidget):
                            #"units": ""}}
         #subsection = QtGui.QStandardItem("New variable")
         #self.add_subsubsection(subsection, new_var)
-        
+
         # get the new children
         child0 = QtGui.QStandardItem("New item")
-        child1 = QtGui.QStandardItem("")        
+        child1 = QtGui.QStandardItem("")
         parent.insertRow(idx.row(), [child0, child1])
         # add an asterisk to the tab text to indicate the tab contents have changed
         self.update_tab_text()
@@ -345,10 +346,10 @@ class file_explore(QtWidgets.QWidget):
             self.context_menu.addAction(self.context_menu.actionAddGlobalAbove)
             self.context_menu.actionAddGlobalAbove.triggered.connect(self.add_global_above)
             if selected_text not in ["canopy_height", "featureType", "fluxnet_id",
-                                     "irga_type", "license_name", 
+                                     "irga_type", "license_name",
                                      "latitude", "longitude",
                                      "processing_level",
-                                     "site_name", "sonic_type", 
+                                     "site_name", "sonic_type",
                                      "time_step", "time_zone",
                                      "time_coverage_end", "time_coverage_start"]:
                 self.context_menu.actionRemoveGlobal = QtWidgets.QAction(self)
@@ -700,12 +701,12 @@ class file_explore(QtWidgets.QWidget):
             self.tabs.setTabText(self.tabs.tab_index_current, tab_text+"*")
         return
 
-class pick_exclude_date_range2(QtWidgets.QDialog):
+class pick_exclude_date_range(QtWidgets.QDialog):
     def __init__(self, var, parent=None):
         super().__init__(parent)
         self.setWindowTitle(f"QC Tool")
         self.setMinimumSize(1000, 700)
-        
+
         # Data setup
         self.var = copy.deepcopy(var)
         self.deletion_log = []
@@ -716,18 +717,18 @@ class pick_exclude_date_range2(QtWidgets.QDialog):
         self.fig = Figure(figsize=(10, 6))
         self.canvas = FigureCanvas(self.fig)
         self.ax = self.fig.add_subplot(111)
-        
+
         # Initial Plot
         self.line, = self.ax.plot(self.var["DateTime"], self.var["Data"], '-r', alpha=0.3)
         self.pts = self.ax.scatter(self.var["DateTime"], self.var["Data"], picker=True,
                                    pickradius=1, s=20, color='blue')
-        
+        self.ax.set_xlim(left=self.var["DateTime"][0], right=self.var["DateTime"][-1])
         # Layout UI
         layout = QtWidgets.QVBoxLayout()
         self.toolbar = NavigationToolbar(self.canvas, self)
         layout.addWidget(self.toolbar)
         layout.addWidget(self.canvas)
-        
+
         # Buttons
         btn_layout = QtWidgets.QHBoxLayout()
         self.save_btn = QtWidgets.QPushButton("Save & Update Control File")
@@ -737,29 +738,43 @@ class pick_exclude_date_range2(QtWidgets.QDialog):
         layout.addLayout(btn_layout)
         self.setLayout(layout)
 
+        # Add the SpanSelector
+            # direction='horizontal' tracks the x-axis (time)
+        # interactive=True allows you to resize the selection before finishing
+        self.span = SpanSelector(self.ax, self.on_span_select, 'horizontal',
+                                 useblit=True, props=dict(alpha=0.3, facecolor='orange'),
+                                 interactive=False, button=1)
+        # Start with it disabled so it doesn't interfere with normal clicks
+        self.span.set_active(False)
+
         # Connect Matplotlib Events
         self.canvas.mpl_connect('key_press_event', self.on_key_press)
         self.canvas.mpl_connect('key_release_event', self.on_key_release)
         self.canvas.mpl_connect('pick_event', self.on_pick)
-        
+
         # Force focus to catch key events
         self.canvas.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
         self.canvas.setFocus()
 
+        # use tight layout
+        self.fig.tight_layout()
+
     def on_key_press(self, event):
         if event.key == 'shift':
             self.shift_is_held = True
+            self.span.set_active(True)
 
     def on_key_release(self, event):
         if event.key == 'shift':
             self.shift_is_held = False
+            self.span.set_active(False)
             self.first_idx = None
 
     def on_pick(self, event):
         # Ignore if zooming/panning
-        if self.toolbar.mode != "":
-            return
-            
+        #if self.toolbar.mode != "":
+            #return
+
         current_idx = event.ind[0]
         if self.shift_is_held:
             if self.first_idx is None:
@@ -780,101 +795,31 @@ class pick_exclude_date_range2(QtWidgets.QDialog):
             self.var["Data"][current_idx] = numpy.nan
             self.update_plot()
 
+    def on_span_select(self, xmin, xmax):
+        """Called when the mouse button is released after dragging"""
+        # Matplotlib provides xmin/xmax as floats. Convert them to datetime objects.
+        dt_min = mdates.num2date(xmin).replace(tzinfo=None)
+        dt_max = mdates.num2date(xmax).replace(tzinfo=None)
+        # Find the indices in the time array that fall within this range
+        mask = (self.var["DateTime"] >= dt_min) & (self.var["DateTime"] <= dt_max)
+        indices = numpy.where(mask)[0]
+
+        if len(indices) > 0:
+            # Log the range based on actual data limits within the selection
+            start_time = self.var["DateTime"][indices[0]]
+            end_time = self.var["DateTime"][indices[-1]]
+            self.deletion_log.append((start_time, end_time))
+
+            # Apply the deletion
+            self.var["Data"][mask] = numpy.nan
+            self.update_plot()
+            #print(f"Excluded range: {start_time} to {end_time}")
+
     def update_plot(self):
         #self.ax.texts = []
         self.pts.set_offsets(numpy.c_[self.var["DateTime"], self.var["Data"]])
         self.line.set_ydata(self.var["Data"])
         self.canvas.draw()
-        
-class pick_exclude_date_range:
-    def __init__(self, var, csv_output="deletions.csv"):
-        self.var = copy.deepcopy(var)
-        self.csv_output = csv_output
-        
-        self.shift_is_held = False
-        self.first_idx = None
-
-        # List to store tuples of (start_time, end_time)
-        self.deletion_log = []
-        
-        #plt.ion()
-        self.fig, self.ax = plt.subplots(figsize=(12, 6))
-        self.line, = self.ax.plot(self.var["DateTime"], self.var["Data"], '-r', alpha=0.3)
-        self.pts = self.ax.scatter(self.var["DateTime"], self.var["Data"], picker=True,
-                                   pickradius=1, s=20, color='blue')
-
-        # Add the Save Button
-        ax_button = plt.axes([0.8, 0.8, 0.1, 0.075]) # [left, bottom, width, height]
-        self.btn_save = Button(ax_button, 'Save', color='lightgreen', hovercolor='limegreen')
-        self.btn_save.on_clicked(self.save_and_close)
-        
-        # Connect events
-        self.fig.canvas.mpl_connect('key_press_event', self.on_key_press)
-        self.fig.canvas.mpl_connect('key_release_event', self.on_key_release)
-        self.fig.canvas.mpl_connect('pick_event', self.on_pick)
-
-        #plt.title(f"Editing: Sws\nClick to delete | Shift+Click two points to delete range")
-        plt.show(block=True)
-        #plt.draw()
-        #pfp_utils.mypause(1)
-        #plt.ioff()
-
-    def on_key_press(self, event):
-        if event.key == 'shift':
-            self.shift_is_held = True
-
-    def on_key_release(self, event):
-        if event.key == 'shift':
-            self.shift_is_held = False
-            self.first_idx = None # Reset range selection if shift is released
-
-    def on_pick(self, event):
-        # We take the first index if multiple points are overlapping
-        current_idx = event.ind[0]
-
-        if self.shift_is_held:
-            if self.first_idx is None:
-                # First point of the range
-                self.first_idx = current_idx
-                #print(f"Range start: Index {self.first_idx}")
-                # Visual feedback for first point
-                self.ann_start = self.ax.annotate('Start', (self.var["DateTime"][current_idx],
-                                                            self.var["Data"][current_idx]))
-                self.fig.canvas.draw()
-            else:
-                # Second point of the range
-                start, end = sorted([self.first_idx, current_idx])
-                # Log the range
-                self.deletion_log.append((self.var["DateTime"][start], self.var["DateTime"][end]))
-                #print(f"Removing range: {start} to {end}")
-                self.var["Data"][start:end+1] = numpy.nan
-                self.first_idx = None # Reset
-                # Clear the 'Start' annotation
-                self.ann_start.remove()
-                self.update_plot()
-        else:
-            # Single point removal
-            timestamp = self.var["DateTime"][current_idx]
-            self.deletion_log.append((timestamp, timestamp))
-            self.var["Data"][current_idx] = numpy.nan
-            self.update_plot()
-
-    def update_plot(self):
-        # Update plot data
-        self.pts.set_offsets(numpy.c_[self.var["DateTime"], self.var["Data"]])
-        self.line.set_ydata(self.var["Data"])
-        self.fig.canvas.draw_idle()
-
-    def save_and_close(self, event):
-        #try:
-            #with open(self.csv_output, 'w', newline='') as f:
-                #writer = csv.writer(f)
-                #writer.writerow(['start_time', 'end_time']) # Header
-                #writer.writerows(self.deletion_log)
-            #print(f"Deletion log saved to {self.csv_output}")
-        #except Exception as e:
-            #print(f"Error saving CSV: {e}")
-        plt.close(self.fig)
 
 class edit_cfg_batch(QtWidgets.QWidget):
     def __init__(self, main_gui):
@@ -3570,11 +3515,10 @@ class edit_cfg_L2(QtWidgets.QWidget):
         self.cfg = self.get_data_from_model()
 
     def pick_excludedaterange(self):
-        # do we have a copy of the data structure?
-        if not hasattr(self, "ds"):
-            # get the netCDF file name
-            nc_uri = os.path.join(self.cfg["Files"]["file_path"], self.cfg["Files"]["in_filename"])
-            self.ds = pfp_io.NetCDFRead(nc_uri)
+        self.cfg = self.get_data_from_model()
+        nc_uri = os.path.join(self.cfg["Files"]["file_path"], self.cfg["Files"]["in_filename"])
+        logger.info(" calling NetCDFRead from edit_cfg_L2")
+        self.ds = pfp_io.NetCDFRead(nc_uri)
         # get the selected variable
         idx = self.view.selectedIndexes()[0]
         selected_item = idx.model().itemFromIndex(idx)
@@ -3582,13 +3526,30 @@ class edit_cfg_L2(QtWidgets.QWidget):
         label =  parent.text()
         pfp_ck.do_qcchecks_oneseries(self.cfg, self.ds, "Variables", label)
         self.var = pfp_utils.GetVariable(self.ds, label)
-        self.qc_dialog =  pick_exclude_date_range2(self.var, parent=self)
+        self.qc_dialog =  pick_exclude_date_range(self.var, parent=self)
         if self.qc_dialog.exec_():
-            print(self.qc_dialog.deletion_log)
+            #print(self.qc_dialog.deletion_log)
+            delete_points = self.qc_dialog.deletion_log
+            idx = self.view.selectedIndexes()[0]
+            selected_item = idx.model().itemFromIndex(idx)
+            for i in range(len(delete_points)):
+                start = delete_points[i][0].strftime("%Y-%m-%d %H:%M")
+                end = delete_points[i][1].strftime("%Y-%m-%d %H:%M")
+                rowCount = selected_item.rowCount()
+                child = selected_item.child(rowCount-1, 1)
+                if child.text() == "YYYY-mm-dd HH:MM,YYYY-mm-dd HH:MM":
+                    child.setText(start+","+end)
+                else:
+                    child0 = QtGui.QStandardItem(str(rowCount))
+                    child0.setEditable(False)
+                    child1 = QtGui.QStandardItem(start+","+end)
+                    selected_item.appendRow([child0, child1])
+            self.update_tab_text()
         else:
-            print("QC cancelled by user")
+            #print("QC cancelled by user")
+            pass
         return
-    
+
     def remove_daterange(self):
         """ Remove a date range from the ustar_threshold section."""
         # remove the date range
