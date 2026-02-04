@@ -4095,6 +4095,23 @@ class edit_cfg_L3(QtWidgets.QWidget):
         self.sections["Plots"].appendRow(parent)
         self.update_tab_text()
 
+    def add_soil_section(self):
+        """ Add a Soil section."""
+        self.sections["Soil"] = QtGui.QStandardItem("Soil")
+        new_soil = {"FgDepth": "<depth_of_heat_flux_plate>",
+                    "BulkDensity": "<soil_bulk_density>",
+                    "OrganicContent": "<soil_organic_content>",
+                    "SwsDefault": "<default_soil_moisture>",
+                    "SwsSeries": "Sws"}
+        for key in new_soil:
+            value = new_soil[key]
+            child0 = QtGui.QStandardItem(key)
+            child0.setEditable(False)
+            child1 = QtGui.QStandardItem(value)
+            self.sections["Soil"].appendRow([child0, child1])
+        self.model.insertRow(self.section_headings.index("Variables"), self.sections["Soil"])
+        self.update_tab_text()
+
     def add_subsection(self, section, dict_to_add):
         """ Add a subsection to the model."""
         for key in dict_to_add:
@@ -4360,6 +4377,12 @@ class edit_cfg_L3(QtWidgets.QWidget):
                     self.context_menu.addAction(self.context_menu.actionAddMassmanSection)
                     self.context_menu.actionAddMassmanSection.triggered.connect(self.add_massman_section)
                     add_separator = True
+                if "Soil" not in self.section_headings:
+                    self.context_menu.actionAddSoilSection = QtWidgets.QAction(self)
+                    self.context_menu.actionAddSoilSection.setText("Add Soil section")
+                    self.context_menu.addAction(self.context_menu.actionAddSoilSection)
+                    self.context_menu.actionAddSoilSection.triggered.connect(self.add_soil_section)
+                    add_separator = True
             elif selected_text == "Imports":
                 self.context_menu.actionAddImportsVariable = QtWidgets.QAction(self)
                 self.context_menu.actionAddImportsVariable.setText("Add variable")
@@ -4428,11 +4451,11 @@ class edit_cfg_L3(QtWidgets.QWidget):
                     self.context_menu.actionAddzms.setText("Add zms")
                     self.context_menu.addAction(self.context_menu.actionAddzms)
                     self.context_menu.actionAddzms.triggered.connect(self.add_zms)
-            elif selected_text == "Massman":
-                self.context_menu.actionRemoveMassmanSection = QtWidgets.QAction(self)
-                self.context_menu.actionRemoveMassmanSection.setText("Remove section")
-                self.context_menu.addAction(self.context_menu.actionRemoveMassmanSection)
-                self.context_menu.actionRemoveMassmanSection.triggered.connect(self.remove_section)
+            elif selected_text in ["Massman", "Soil"]:
+                self.context_menu.actionRemoveSection = QtWidgets.QAction(self)
+                self.context_menu.actionRemoveSection.setText("Remove section")
+                self.context_menu.addAction(self.context_menu.actionRemoveSection)
+                self.context_menu.actionRemoveSection.triggered.connect(self.remove_section)
             elif selected_text == "Variables":
                 self.context_menu.actionAddVariable = QtWidgets.QAction(self)
                 self.context_menu.actionAddVariable.setText("Add variable")
