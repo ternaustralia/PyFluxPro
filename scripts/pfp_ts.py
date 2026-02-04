@@ -370,30 +370,18 @@ def CalculateHumidities(ds):
     """
     if "AH" not in list(ds.root["Variables"].keys()):
         if "SH" in list(ds.root["Variables"].keys()):
-            msg = " Calculating absolute humidity from specific humidity"
-            logger.info(msg)
             AbsoluteHumidityFromSpecificHumidity(ds)   # calculate AH from SH
         elif "RH" in list(ds.root["Variables"].keys()):
-            msg = " Calculating absolute humidity from relative humidity"
-            logger.info(msg)
             AbsoluteHumidityFromRelativeHumidity(ds)   # calculate AH from RH
     if "SH" not in list(ds.root["Variables"].keys()):
         if "AH" in list(ds.root["Variables"].keys()):
-            msg = " Calculating specific humidity from absolute humidity"
-            logger.info(msg)
             SpecificHumidityFromAbsoluteHumidity(ds)
         elif "RH" in list(ds.root["Variables"].keys()):
-            msg = " Calculating specific humidity from relative humidity"
-            logger.info(msg)
             SpecificHumidityFromRelativeHumidity(ds)
     if "RH" not in list(ds.root["Variables"].keys()):
         if "AH" in list(ds.root["Variables"].keys()):
-            msg = " Calculating relative humidity from absolute humidity"
-            logger.info(msg)
             RelativeHumidityFromAbsoluteHumidity(ds)
         elif "SH" in list(ds.root["Variables"].keys()):
-            msg = " Calculating relative humidity from specific humidity"
-            logger.info(msg)
             RelativeHumidityFromSpecificHumidity(ds)
     return
 
