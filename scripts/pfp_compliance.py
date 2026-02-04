@@ -620,7 +620,8 @@ def parse_l3_co2_label(info):
     if "CO2" in list(info["cfg"]["Variables"].keys()):
         info["variables"]["CO2"]["label"] = "CO2"
     else:
-        msg = " Label for CO2 not found in control file"
+        info["variables"]["CO2"]["label"] = None
+        msg = " No entry for CO2 in control file"
         logger.warning(msg)
         info["status"]["value"] = 1
         info["status"]["message"] = msg
@@ -628,6 +629,8 @@ def parse_l3_co2_label(info):
 
 def parse_l3_co2_height(ds, info):
     """ Get the height of the CO2 measurement from various sources."""
+    if info["variables"]["CO2"]["label"] is None:
+        return
     cfg = info["cfg"]
     got_zms = False
     labels = list(ds.root["Variables"].keys())
@@ -1088,6 +1091,10 @@ def check_l3_options_rotation(cfg, messages):
     return
 def check_l3_options_soil(cfg, messages):
     """ Check the entries of the Soil section."""
+    if "Soil" not in list(cfg.keys()):
+        msg = "No [Soil] section in control file"
+        messages["WARNING"].append(msg)
+        return
     # check the numbers
     for item in ["BulkDensity", "OrganicContent"]:
         if item in cfg["Soil"]:

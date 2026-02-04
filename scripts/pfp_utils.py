@@ -312,6 +312,7 @@ def ConvertCO2Units(cf, ds):
                     msg = " Converting " + label + " from " + CO2_in["Attr"]["units"] + " to mmol/m^3"
                     logger.info(msg)
                     CO2_out = convert_units_func(ds, CO2_in, "mmol/m^3")
+                    CreateVariable(ds, CO2_out)
                 else:
                     continue
         elif (label[-3:] == "_Vr"):
@@ -325,6 +326,7 @@ def ConvertCO2Units(cf, ds):
                     CO2_out = convert_units_func(ds, CO2_in, "mmol/m^3")
                     CO2_out["Data"] = CO2_out["Data"]*CO2_out["Data"]
                     CO2_out["Attr"]["units"] = "mmol^2/m^6"
+                    CreateVariable(ds, CO2_out)
                 else:
                     continue
         elif ((CO2_units_in in ["mg/m^3"]) and (CO2_units_out == "umol/mol")):
@@ -333,11 +335,11 @@ def ConvertCO2Units(cf, ds):
             msg += " to " + CO2_units_out
             logger.info(msg)
             CO2_out = convert_units_func(ds, CO2_in, CO2_units_out)
+            CreateVariable(ds, CO2_out)
         else:
             msg = " Unrecognised conversion for " + label
-            msg += "(" + CO2_units_in + " to " + CO2_units_out + ")"
+            msg += " (" + CO2_units_in + " to " + CO2_units_out + ")"
             logger.error(msg)
-        CreateVariable(ds, CO2_out)
     return
 
 def ConvertFco2Units(cf, ds):

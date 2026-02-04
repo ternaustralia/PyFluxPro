@@ -368,23 +368,34 @@ def CalculateHumidities(ds):
      March 2015
     Author: PRI
     """
-    msg = " Calculating humidities"
-    logger.info(msg)
     if "AH" not in list(ds.root["Variables"].keys()):
         if "SH" in list(ds.root["Variables"].keys()):
+            msg = " Calculating absolute humidity from specific humidity"
+            logger.info(msg)
             AbsoluteHumidityFromSpecificHumidity(ds)   # calculate AH from SH
         elif "RH" in list(ds.root["Variables"].keys()):
+            msg = " Calculating absolute humidity from relative humidity"
+            logger.info(msg)
             AbsoluteHumidityFromRelativeHumidity(ds)   # calculate AH from RH
     if "SH" not in list(ds.root["Variables"].keys()):
         if "AH" in list(ds.root["Variables"].keys()):
+            msg = " Calculating specific humidity from absolute humidity"
+            logger.info(msg)
             SpecificHumidityFromAbsoluteHumidity(ds)
         elif "RH" in list(ds.root["Variables"].keys()):
+            msg = " Calculating specific humidity from relative humidity"
+            logger.info(msg)
             SpecificHumidityFromRelativeHumidity(ds)
     if "RH" not in list(ds.root["Variables"].keys()):
         if "AH" in list(ds.root["Variables"].keys()):
+            msg = " Calculating relative humidity from absolute humidity"
+            logger.info(msg)
             RelativeHumidityFromAbsoluteHumidity(ds)
         elif "SH" in list(ds.root["Variables"].keys()):
+            msg = " Calculating relative humidity from specific humidity"
+            logger.info(msg)
             RelativeHumidityFromSpecificHumidity(ds)
+    return
 
 def CalculateHumiditiesAfterGapFill(ds, info):
     """
@@ -2900,7 +2911,8 @@ def MergeSeriesUsingDict(ds, info, merge_order="standard"):
 
 def MergeHumidities(cf, ds, convert_units=False):
     if "AH" not in cf["Variables"] and "RH" not in cf["Variables"] and "SH" not in cf["Variables"]:
-        logger.error(" MergeHumidities: No humidities found in control file, returning ...")
+        msg = " MergeHumidities: No humidities found in control file, returning ..."
+        logger.warning(msg)
         return
     if "AH" in cf["Variables"]:
         if "MergeSeries" in cf["Variables"]["AH"]:
@@ -3173,6 +3185,11 @@ def TaFromTv(cf, ds, Ta_out="Ta_SONIC_Av", Tv_in="Tv_SONIC_Av", AH_in="AH",
     # NOTE: the virtual temperature is used in place of the air temperature
     #       to calculate the vapour pressure from the absolute humidity, the
     #       approximation involved here is of the order of 1%.
+    labels = list(ds.root["Variables"].keys())
+    if Ta_out in labels:
+        msg = " TaFromTv: Ta_SONIC_Av already in data structure"
+        logger.warning(msg)
+        return
     logger.info(" Calculating Ta from Tv")
     nRecs = int(ds.root["Attributes"]["nc_nrecs"])
     ones = numpy.ones(nRecs)
@@ -3181,17 +3198,16 @@ def TaFromTv(cf, ds, Ta_out="Ta_SONIC_Av", Tv_in="Tv_SONIC_Av", AH_in="AH",
     Ta = pfp_utils.CreateEmptyVariable(Ta_out, nRecs)
     # check to see if we have enough data to proceed
     # deal with possible aliases for the sonic temperature
-    if Tv_in not in list(ds.root["Variables"].keys()):
+    if Tv_in not in labels:
         msg = " TaFromTv: sonic virtual temperature not found in data structure"
         logger.error(msg)
         return
-    if ((AH_in not in list(ds.root["Variables"].keys())) and (RH_in not in list(ds.root["Variables"].keys())) and
-        (SH_in not in list(ds.root["Variables"].keys()))):
+    if ((AH_in not in labels) and (RH_in not in labels) and (SH_in not in labels)):
         labstr = str(AH_in) + "," + str(RH_in) + "," + str(SH_in)
         msg = " TaFromTv: no humidity data (" + labstr + ") found in data structure"
         logger.error(msg)
         return
-    if ps_in not in list(ds.root["Variables"].keys()):
+    if ps_in not in labels:
         msg = " TaFromTv: pressure (" + str(ps_in) + ") not found in data structure"
         logger.error(msg)
         return
