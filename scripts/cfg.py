@@ -1,5 +1,8 @@
 version_name = "PyFluxPro"
-version_number = "V3.4.23"
+version_number = "V3.4.24"
+# V3.4.24 - February 2026
+#         - allow L3 to run without all of the standard variables present
+#         - implement interactive picking of ranges for ExcludeDates
 # V3.4.23 - October 2025
 #         - implemented batch_sites processing and editing of control file
 #         - removed pfp_log.debug_function_enter() and debug_function_leave()
