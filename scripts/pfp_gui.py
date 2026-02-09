@@ -24,6 +24,7 @@ from scripts import pfp_gfALT
 from scripts import pfp_gfSOLO
 from scripts import pfp_io
 from scripts import pfp_plot
+from scripts import pfp_ts
 from scripts import pfp_utils
 
 pfp_log = os.environ["pfp_log"]
@@ -3712,6 +3713,7 @@ class edit_cfg_L3(QtWidgets.QWidget):
     def __init__(self, main_gui):
         super(edit_cfg_L3, self).__init__()
         self.cfg = copy.deepcopy(main_gui.file)
+        self.load_netcdf_async()
         self.main_gui = main_gui
         self.tabs = main_gui.tabs
         self.edit_L3_gui()
@@ -3938,7 +3940,7 @@ class edit_cfg_L3(QtWidgets.QWidget):
         elif selected_item.text().split("_")[0] in ["Fe", "Fh"]:
             edge_threshold = 100
         else:
-            edge_threshold = ""
+            edge_threshold = "20,80"
         new_qc = {"MADCheck":{"Fsd_threshold": 12, "edge_threshold": edge_threshold,
                               "window_size": 13, "zfc": 5.5,}}
         # get the index of the selected item
@@ -4668,6 +4670,10 @@ class edit_cfg_L3(QtWidgets.QWidget):
             # check to see what the user whats us to do based on what was selected when the right click happened
             if str(idx.data()) in ["ExcludeDates"]:
                 # we are adding a date range to an ExcludeDates QC check
+                self.context_menu.actionPickDateRange = QtWidgets.QAction(self)
+                self.context_menu.actionPickDateRange.setText("Pick date range")
+                self.context_menu.addAction(self.context_menu.actionPickDateRange)
+                self.context_menu.actionPickDateRange.triggered.connect(self.pick_excludedaterange)
                 self.context_menu.actionAddExcludeDateRange = QtWidgets.QAction(self)
                 self.context_menu.actionAddExcludeDateRange.setText("Add date range")
                 self.context_menu.addAction(self.context_menu.actionAddExcludeDateRange)
@@ -4977,6 +4983,30 @@ class edit_cfg_L3(QtWidgets.QWidget):
         # add an asterisk to the tab text to indicate the tab contents have changed
         self.update_tab_text()
 
+    def load_netcdf_async(self):
+        # Create a thread and a worker
+        self.thread = QtCore.QThread()
+        self.worker = NetCDFReadWorker(self.cfg)
+        # Move worker to the new thread
+        self.worker.moveToThread(self.thread)
+        # Connect signals and slots
+        self.thread.started.connect(self.worker.run)
+        self.worker.finished.connect(self.on_load_success)
+        self.worker.finished.connect(self.thread.quit) # Stop thread when done
+        self.worker.error.connect(self.on_load_error)
+        # Clean up memory when finished
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+        # Start the thread
+        self.thread.start()
+
+    def on_load_success(self, ds):
+        logger.info("  Successfully loaded data structure from netCDF")
+        self.ds = ds
+
+    def on_load_error(self, message):
+        logger.error("  Failed to load data structure from netCDF {message}")
+
     def open_netcdf_file(self):
         idx = self.view.selectedIndexes()[0]
         selected_item = idx.model().itemFromIndex(idx)
@@ -4988,6 +5018,46 @@ class edit_cfg_L3(QtWidgets.QWidget):
         if not os.path.isfile(file_uri):
             return
         self.main_gui.file_open(file_uri=file_uri)
+        return
+
+    def pick_excludedaterange(self):
+        """
+        Function to display variable as a time series in a separate window and
+        allow the user to select individual points or ranges of points
+        to be removed by the ExcludeDates QC function.  Selected points or
+        ranges are written back to the control file.
+        """
+        self.cfg = self.get_data_from_model()
+        # get the selected variable
+        idx = self.view.selectedIndexes()[0]
+        selected_item = idx.model().itemFromIndex(idx)
+        parent = selected_item.parent()
+        label =  parent.text()
+        pfp_ts.CombineSeries(self.cfg, self.ds, label)
+        pfp_ck.do_qcchecks_oneseries(self.cfg, self.ds, "Variables", label)
+        self.var = pfp_utils.GetVariable(self.ds, label)
+        self.qc_dialog =  pick_exclude_date_range(self.var, parent=self)
+        if self.qc_dialog.exec_():
+            #print(self.qc_dialog.deletion_log)
+            delete_points = self.qc_dialog.deletion_log
+            idx = self.view.selectedIndexes()[0]
+            selected_item = idx.model().itemFromIndex(idx)
+            for i in range(len(delete_points)):
+                start = delete_points[i][0].strftime("%Y-%m-%d %H:%M")
+                end = delete_points[i][1].strftime("%Y-%m-%d %H:%M")
+                rowCount = selected_item.rowCount()
+                child = selected_item.child(rowCount-1, 1)
+                if child.text() == "YYYY-mm-dd HH:MM,YYYY-mm-dd HH:MM":
+                    child.setText(start+","+end)
+                else:
+                    child0 = QtGui.QStandardItem(str(rowCount))
+                    child0.setEditable(False)
+                    child1 = QtGui.QStandardItem(start+","+end)
+                    selected_item.appendRow([child0, child1])
+            self.update_tab_text()
+        else:
+            #print("QC cancelled by user")
+            pass
         return
 
     def remove_daterange(self):
@@ -12351,6 +12421,25 @@ class edit_cfg_windrose(QtWidgets.QWidget):
         tab_text = str(self.tabs.tabText(self.tabs.tab_index_current))
         if "*" not in tab_text:
             self.tabs.setTabText(self.tabs.tab_index_current, tab_text+"*")
+
+class NetCDFReadWorker(QtCore.QObject):
+    finished = QtCore.pyqtSignal(object)
+    error = QtCore.pyqtSignal(str)
+    def __init__(self, cfg):
+        super().__init__()
+        self.cfg = cfg
+        self.nc_uri = os.path.join(self.cfg["Files"]["file_path"],
+                                   self.cfg["Files"]["in_filename"])
+
+    def run(self):
+        try:
+            # Open the netCDF file
+            #dataset = nc.Dataset(self.file_path, 'r')
+            self.ds = pfp_io.NetCDFRead(self.nc_uri)
+            # Signal that we are done and pass the dataset object
+            self.finished.emit(self.ds)
+        except Exception as e:
+            self.error.emit(str(e))
 
 class pfp_l4_ui(QtWidgets.QDialog):
     def __init__(self, parent=None):
