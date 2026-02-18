@@ -1625,8 +1625,6 @@ def CorrectFgForStorage(cf, ds, info, Fg_out='Fg', Fg_in='Fg', Ts_in='Ts', Sws_i
     oc = max(0.0,min(1.0,float(cf['Soil']['OrganicContent'])))
     mc = 1.0 - oc
     # mask is True if Fg or Ts are masked
-
-
     m1 = numpy.ma.getmaskarray(Fg["Data"])
     m2 = numpy.ma.getmaskarray(Ts["Data"])
     mask = numpy.ma.mask_or(m1, m2, copy=True, shrink=False)
