@@ -745,7 +745,7 @@ def _write_to_file(data_dict, write_to_file):
             for year in df.Year.unique():
                 (df.loc[df.Year==year]
                  .drop('Year', axis=1)
-                 .to_excel(xlwriter, sheet_name=str(year), index=None)
+                 .to_excel(excel_writer=xlwriter, sheet_name=str(year), index=None)
                  )
             continue
     xlwriter.close()

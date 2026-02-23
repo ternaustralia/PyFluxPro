@@ -527,3 +527,6 @@ and the Education Investment Fund.'''
             units = kPa
         [[[csv]]]
             name = ps_7500_Avg
+[Options]
+    call_mode = interactive
+    show_plots = Yes

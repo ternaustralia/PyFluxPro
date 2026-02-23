@@ -226,7 +226,7 @@ def xl_write_mpt(mpt_full_path, ustar_results):
     xlwriter = pandas.ExcelWriter(mpt_full_path)
     df_annual = pandas.DataFrame.from_dict(annual, orient='index')
     df_annual.index.names = ["Year"]
-    df_annual.to_excel(xlwriter, sheet_name='Annual')
+    df_annual.to_excel(excel_writer= xlwriter, sheet_name='Annual')
     by_years = {}
     for year in years:
         by_years["Seasonal"] = {"Values": ustar_results["Years"][year]["seasonal"]["value"],

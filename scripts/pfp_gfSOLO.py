@@ -433,7 +433,7 @@ def gfSOLO_plot(pd, ds, drivers, target, output, l5s, si=0, ei=-1):
     # plot the best fit line
     coefs = numpy.ma.polyfit(numpy.ma.copy(mod["Data"]), numpy.ma.copy(obs["Data"]), 1)
     xfit = numpy.ma.array([numpy.ma.min(mod["Data"]), numpy.ma.max(mod["Data"])], copy=True)
-    yfit = numpy.polyval(coefs, xfit)
+    yfit = numpy.polyval(coefs,xfit)
     r = numpy.ma.corrcoef(mod["Data"], obs["Data"])
     ax2.plot(xfit, yfit, 'r--', linewidth=3)
     eqnstr = 'y = %.3fx + %.3f, r = %.3f'%(coefs[0], coefs[1], r[0][1])

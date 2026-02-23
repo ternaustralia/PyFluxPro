@@ -867,7 +867,7 @@ def ReadExcelWorkbook(l1_info):
         # set the data frame index to the time stamp
         dfs[df_name].set_index(timestamp, inplace=True)
         # round the datetime index to the nearest second
-        dfs[df_name].index = dfs[df_name].index.round('1S')
+        dfs[df_name].index = dfs[df_name].index.round('1s')
         # drop columns except those wanted by the user
         dfs[df_name] = dfs[df_name][~dfs[df_name].index.duplicated(keep='first')]
         # drop columns except those wanted by the user
@@ -2670,7 +2670,7 @@ def MergeDataFrames(dfs, l1_info):
             start = min([min(dfs[df_name].index.values), start])
             end = max([max(dfs[df_name].index.values), end])
         # get the timestep as a string pandas will recognise
-        ts = str(int(l1_info["read_excel"]["Global"]["time_step"])) + "T"
+        ts = str(int(l1_info["read_excel"]["Global"]["time_step"])) + "min"
         # create a pandas datetime range
         dt = pandas.date_range(start, end, freq=ts)
         # create an empty data frame
