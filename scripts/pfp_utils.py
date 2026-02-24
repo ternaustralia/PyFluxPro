@@ -2218,7 +2218,8 @@ def get_diurnalstats(dt,data,info):
         ei = ei - 1
     data_wholedays = data[si:ei+1]
     ndays = len(data_wholedays)//nperday
-    data_2d = numpy.ma.reshape(data_wholedays,[ndays,nperday])
+    data_2d =  numpy.ma.reshape(data_wholedays,new_shape =[ndays,nperday])
+    data_2d = data_2d.astype('float64')
     diel_stats = {}
     diel_stats["Hr"] = numpy.ma.array([i*ts/float(60) for i in range(0,nperday)], copy=True)
     diel_stats["Av"] = numpy.ma.average(data_2d,axis=0)

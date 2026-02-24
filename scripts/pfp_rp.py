@@ -8,6 +8,7 @@ import os
 import dateutil
 import matplotlib.pyplot as plt
 import numpy
+from numpy.polynomial import Polynomial # NL: old polynomial API seems to be behaving strangely, trying this out.
 import pandas
 import pylab
 # PFP modules
@@ -269,7 +270,7 @@ def EcoResp(ds, l6_info, called_by, xl_writer):
         ER["Attr"]["comment1"] = "Drivers were {}".format(str(drivers))
         pfp_utils.CreateVariable(ds, ER)
         # Write to excel
-        params_df.to_excel(xl_writer, output)
+        params_df.to_excel(excel_writer = xl_writer, sheet_name = output)
         xl_writer.close()
         # Do plotting
         startdate = str(ds.root["Variables"]["DateTime"]["Data"][0])
@@ -2239,11 +2240,11 @@ def rp_plot(pd, ds, output, drivers, target, iel, called_by, si=0, ei=-1):
     ax2.set_ylabel(target + '_obs')
     ax2.set_xlabel(target + '_' + mode)
     # plot the best fit line
-    coefs = numpy.ma.polyfit(numpy.ma.copy(mod["Data"]), numpy.ma.copy(obs["Data"]), 1)
+    coefs = Polynomial.fit(numpy.ma.copy(mod["Data"].astype('float')), numpy.ma.copy(obs["Data"].astype('float')), 1).convert().coef
     xfit = numpy.ma.array([numpy.ma.minimum.reduce(mod["Data"]),
-                           numpy.ma.maximum.reduce(mod["Data"])], copy=True)
-    yfit = numpy.polyval(coefs, xfit)
-    r = numpy.ma.corrcoef(mod["Data"], obs["Data"])
+                           numpy.ma.maximum.reduce(mod["Data"]).astype('float')], copy=True)
+    yfit = numpy.polyval(xfit,coefs)
+    r = numpy.ma.corrcoef(mod["Data"].astype('float'), obs["Data"].astype('float'))
     ax2.plot(xfit, yfit, 'r--', linewidth=3)
     eqnstr = 'y = %.3fx + %.3f, r = %.3f'%(coefs[0], coefs[1], r[0][1])
     ax2.text(0.5, 0.875, eqnstr, fontsize=8, horizontalalignment='center', transform=ax2.transAxes)
@@ -2253,7 +2254,7 @@ def rp_plot(pd, ds, output, drivers, target, iel, called_by, si=0, ei=-1):
     diff = mod["Data"] - obs["Data"]
     bias = numpy.ma.average(diff)
     ielo[output]["results"]["Bias"].append(bias)
-    rmse = numpy.ma.sqrt(numpy.ma.mean((obs["Data"]-mod["Data"])*(obs["Data"]-mod["Data"])))
+    rmse = numpy.ma.sqrt(numpy.ma.mean((obs["Data"].astype('float')-mod["Data"].astype('float'))*(obs["Data"].astype('float')-mod["Data"]).astype('float')))
     plt.figtext(0.725, 0.225, 'No. points')
     plt.figtext(0.825, 0.225, str(numpoints))
     ielo[output]["results"]["No. points"].append(numpoints)
@@ -2276,8 +2277,8 @@ def rp_plot(pd, ds, output, drivers, target, iel, called_by, si=0, ei=-1):
     var_mod = numpy.ma.var(mod["Data"])
     ielo[output]["results"]["Var (" + mode + ")"].append(var_mod)
     ielo[output]["results"]["Var ratio"].append(var_obs/var_mod)
-    ielo[output]["results"]["Avg (obs)"].append(numpy.ma.average(obs["Data"]))
-    ielo[output]["results"]["Avg (" + mode + ")"].append(numpy.ma.average(mod["Data"]))
+    ielo[output]["results"]["Avg (obs)"].append(numpy.ma.average(obs["Data"]).astype('float'))
+    ielo[output]["results"]["Avg (" + mode + ")"].append(numpy.ma.average(mod["Data"].astype('float')))
     # time series of drivers and target
     ts_axes = []
     rect = [pd["margin_left"], pd["ts_bottom"], pd["ts_width"], pd["ts_height"]]
