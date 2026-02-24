@@ -483,7 +483,11 @@ def ParseConcatenateControlFile(cf):
     for key in sorted(list(cf["Files"]["In"].keys())):
         file_name = cf["Files"]["In"][key]
         if os.path.isfile(file_name):
-            inc["in_file_names"].append(file_name)
+            if file_name not in inc["in_file_names"]:
+                inc["in_file_names"].append(file_name)
+            else:
+                msg = " Duplicate file found (" + os.path.basename(file_name) + ")"
+                logger.warning(msg)
         else:
             msg = " File not found (" + os.path.basename(file_name) + ")"
             logger.warning(msg)

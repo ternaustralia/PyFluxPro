@@ -294,7 +294,7 @@ class file_explore(QtWidgets.QWidget):
         selected_item = idx.model().itemFromIndex(idx)
         # get the parent of the selected item
         parent = selected_item.parent()
-        
+
         ## construct the new variable dictionary
         #new_var = {"xl":{"sheet":"", "name":""},
                    #"Attr":{"height": "", "instrument": "", "long_name": "",
@@ -302,10 +302,10 @@ class file_explore(QtWidgets.QWidget):
                            #"units": ""}}
         #subsection = QtGui.QStandardItem("New variable")
         #self.add_subsubsection(subsection, new_var)
-        
+
         # get the new children
         child0 = QtGui.QStandardItem("New item")
-        child1 = QtGui.QStandardItem("")        
+        child1 = QtGui.QStandardItem("")
         parent.insertRow(idx.row(), [child0, child1])
         # add an asterisk to the tab text to indicate the tab contents have changed
         self.update_tab_text()
@@ -337,10 +337,10 @@ class file_explore(QtWidgets.QWidget):
             self.context_menu.addAction(self.context_menu.actionAddGlobalAbove)
             self.context_menu.actionAddGlobalAbove.triggered.connect(self.add_global_above)
             if selected_text not in ["canopy_height", "featureType", "fluxnet_id",
-                                     "irga_type", "license_name", 
+                                     "irga_type", "license_name",
                                      "latitude", "longitude",
                                      "processing_level",
-                                     "site_name", "sonic_type", 
+                                     "site_name", "sonic_type",
                                      "time_step", "time_zone",
                                      "time_coverage_end", "time_coverage_start"]:
                 self.context_menu.actionRemoveGlobal = QtWidgets.QAction(self)
@@ -5558,7 +5558,16 @@ class edit_cfg_concatenate(QtWidgets.QWidget):
         # update the model
         if len(str(new_file_path)) > 0:
             new_file_path = QtCore.QDir.toNativeSeparators(str(new_file_path))
-            parent.child(selected_item.row(), 1).setText(new_file_path)
+            cfg = self.get_data_from_model()
+            # we use os.path.abspath() to guard against the use of "../Examples"
+            in_files =  [os.path.abspath(cfg["Files"]["In"][n]) for n in cfg["Files"]["In"]]
+            if new_file_path not in in_files:
+                parent.child(selected_item.row(), 1).setText(new_file_path)
+            else:
+                n = in_files.index(new_file_path)
+                msg = os.path.basename(new_file_path) + " already included as input " + str(n)
+                MsgBox_Continue(msg)
+        return
 
     def browse_output_file(self):
         """ Browse for the output data file path."""
