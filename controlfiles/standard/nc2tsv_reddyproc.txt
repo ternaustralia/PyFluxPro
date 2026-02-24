@@ -24,3 +24,6 @@ level = nc2tsv_reddyproc
     [[Tsoil]]
         name = Ts
         format = 0.00
+    [[P]]
+        name = Precip
+        format = 0.000
