@@ -1,0 +1,73 @@
+# Control file for footprint calculation for Kljun et al  2015 approach (calc_footprint_FFP_climatology).
+#
+# [Files] - contains paths, file names and location of data in file
+# ========================================================================================================
+
+[Files]
+# From the folloing two options comment out eitehr ERA5 or ACCESS, needed for Kljun et al 2015 option for
+# boundary layer height "Habl"
+# Option 1: ACCESS data
+[Imports]
+    [[Habl]]
+        source = "ACCESS"
+        file_name = C:\Users\170012\Documents\OzFlux\NSW Hub\Sites\HowardSprings\Data\External\ACCESS\HowardSprings_ACCESS.nc
+        var_name = "Habl_11"
+# Option 2: ERA5 data
+#[Imports]
+#    [[Habl]]
+#        source = "ERA5"
+#        file_name = <path_to_you_external_data/<file>_ERA5.nc
+#        var_name = "Habl"
+
+[Options]
+    # ====================================================================================================
+    # "Options" specifies the climatology of the footprints. Only one of the parameters, daily,
+    # monthly, annual, special or single can be set to Yes. Single and Special require Start and End-date,
+    # otherwise the climatolgy for the whole data-set is calculated.
+    # If 'Daily' is set to 'yes', a climatology is calculated for every single day of the data in the
+    # nc-file (Warning: if large files are processed the output nc-file is huge, one year of daily data
+    # for a grid of 250x250 produces about 200 MB of output).
+    # If 'Monthly' is set the file is divided into monthly data and a climatology is calculated.
+    # If 'Annual', then individual climatologies for each year in the data file are prodiced.
+    # Length of time for the climatology
+    # ====================================================================================================
+    tower_height   = 10
+    canopy_height  = 5.5
+    footprint_size = 500  # length in m of a square around the tower
+    num_cells      = 250  # number of cells per length ==> footprint_size / num_cells = grid_resolution
+    Climatology    = 'Annual' #'Daily' #'Hourly' #'Monthly' #'Single' #'Monthly' #'Annual' #
+    Cumulative     = False # (default = 'No')
+    AreaOfInterest = False  #'Yes' # (default is 'No')
+
+[AreaOfInterest]
+
+[General]
+    iplot = 2 #2   # 1 / jpg plot on screen; 2 / png plot into kml
+    #idaytime = 0
+    PlotWidth  = 5.0 #10.9
+    PlotHeight = 5.0 # 7.5
+    OzFlux_area_image = None #"../Sites/Loxton/images/loxton_ndvi_500x500.png" #
+
+[Variables]
+    [[Fsd]]
+        name = Fsd
+    [[L]]
+        name = L
+    [[ustar]]
+        name = ustar
+    [[VSd]]
+        name = V_SONIC_Sd
+    [[Wd]]
+        name = Wd
+    [[Ws]]
+        name = Ws
+    [[z0]]
+        name = z0
+    [[Ta]]
+        name = Ta
+    [[AH]]
+        name = AH
+    [[ps]]
+        name = ps
+    [[Fh]]
+        name = Fh

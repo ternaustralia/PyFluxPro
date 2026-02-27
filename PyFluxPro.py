@@ -73,6 +73,9 @@ class pfp_main_ui(QWidget):
         # Utilities/u* threshold submenu
         self.menuUtilitiesUstar = QMenu(self.menuUtilities)
         self.menuUtilitiesUstar.setTitle("u* threshold")
+        # Footprint submenu
+        self.menuUtilitiesFootprint = QMenu(self.menuUtilities)
+        self.menuUtilitiesFootprint.setTitle("Footprint")
         # Help menu
         self.menuHelp = QMenu(self.menubar)
         self.menuHelp.setTitle("Help")
@@ -141,6 +144,10 @@ class pfp_main_ui(QWidget):
         # Utilities menu
         self.actionUtilitiesClimatology = QAction(self)
         self.actionUtilitiesClimatology.setText("Climatology")
+        self.actionUtilitiesFootprintKormannMeixner = QAction(self)
+        self.actionUtilitiesFootprintKormannMeixner.setText("Kormann & Meixner")
+        self.actionUtilitiesFootprintKljun = QAction(self)
+        self.actionUtilitiesFootprintKljun.setText("Kljun et al ")
         self.actionUtilitiesUstarCPDBarr = QAction(self)
         self.actionUtilitiesUstarCPDBarr.setText("CPD (Barr)")
         self.actionUtilitiesUstarCPDMcHugh = QAction(self)
@@ -194,8 +201,13 @@ class pfp_main_ui(QWidget):
         self.menuUtilitiesUstar.addAction(self.actionUtilitiesUstarCPDMcHugh)
         self.menuUtilitiesUstar.addAction(self.actionUtilitiesUstarCPDMcNew)
         self.menuUtilitiesUstar.addAction(self.actionUtilitiesUstarMPT)
+
+        #Utilities Footprint submenu
+        self.menuUtilitiesFootprint.addAction(self.actionUtilitiesFootprintKormannMeixner)
+        self.menuUtilitiesFootprint.addAction(self.actionUtilitiesFootprintKljun)
         # Utilities menu
         self.menuUtilities.addAction(self.actionUtilitiesClimatology)
+        self.menuUtilities.addAction(self.menuUtilitiesFootprint.menuAction())
         self.menuUtilities.addAction(self.menuUtilitiesUstar.menuAction())
         #self.menuUtilities.addAction(self.actionUtilitiesCFCheck)
         # add individual menus to menu bar
@@ -267,6 +279,8 @@ class pfp_main_ui(QWidget):
         self.actionPlotClosePlots.triggered.connect(pfp_top_level.do_plot_closeplots)
         # Utilities menu actions
         self.actionUtilitiesClimatology.triggered.connect(self.utilities_climatology_standard)
+        self.actionUtilitiesFootprintKljun.triggered.connect(self.utilities_footprint_kljun_standard)
+        self.actionUtilitiesFootprintKormannMeixner.triggered.connect(self.utilities_footprint_kormannmeixner_standard)
         self.actionUtilitiesUstarCPDBarr.triggered.connect(self.utilities_ustar_cpd_barr_standard)
         self.actionUtilitiesUstarCPDMcHugh.triggered.connect(self.utilities_ustar_cpd_mchugh_standard)
         self.actionUtilitiesUstarCPDMcNew.triggered.connect(self.utilities_ustar_cpd_mcnew_standard)
@@ -924,6 +938,29 @@ class pfp_main_ui(QWidget):
             return
         worker = pfp_threading.Worker(pfp_top_level.do_utilities_climatology_standard,
                                       self, nc_file_uri)
+        self.threadpool.start(worker)
+        return
+    def utilities_footprint_kljun_standard(self):
+        # disable the Run/Current menu option
+        self.actionRunCurrent.setDisabled(True)
+        logger = logging.getLogger(name="pfp_log")
+        nc_file_uri = pfp_io.get_filename_dialog(title="Choose a netCDF file", ext="*.nc")
+        if not os.path.exists(nc_file_uri):
+            logger.info(" Footprint: no netCDF file chosen")
+            return
+        worker = pfp_threading.Worker(pfp_top_level.do_utilities_footprint_kljun_standard,self, nc_file_uri)
+        self.threadpool.start(worker)
+        return
+    def utilities_footprint_kormannmeixner_standard(self):
+        # run footprint from the menu
+        # disable the Run/Current menu option
+        self.actionRunCurrent.setDisabled(True)
+        logger = logging.getLogger(name="pfp_log")
+        nc_file_uri = pfp_io.get_filename_dialog(title="Choose a netCDF file", ext="*.nc")
+        if not os.path.exists(nc_file_uri):
+            logger.info(" Footprint: no netCDF file chosen")
+            return
+        worker = pfp_threading.Worker(pfp_top_level.do_utilities_footprint_kormannmeixner_standard,self, nc_file_uri)
         self.threadpool.start(worker)
         return
     def utilities_ustar_cpd_barr_custom(self):

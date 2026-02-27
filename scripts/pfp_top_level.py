@@ -19,6 +19,7 @@ from scripts import pfp_levels
 from scripts import pfp_plot
 from scripts import pfp_utils
 from scripts import split_dialog
+from scripts import pfp_footprint
 
 pfp_log = os.environ["pfp_log"]
 logger = logging.getLogger(pfp_log)
@@ -1114,6 +1115,68 @@ def do_utilities_climatology_standard(main_ui, nc_file_uri):
         logger.error(error_message)
     main_ui.actionRunCurrent.setDisabled(False)
     return
+
+def do_utilities_footprint_kljun_standard(main_ui,nc_file_uri):
+    """
+    Purpose: To calculate the footprint of the dataset using the Kljun et al method.
+    Args:
+        main_ui:
+
+    Returns:
+
+    """
+    try:
+        logger.info("Starting the Kljun et al footprint calculation...")
+
+        # get the base path of script or Pyinstaller application
+        base_path = pfp_utils.get_base_path()
+        stdname = os.path.join(base_path, "controlfiles", "standard", "kljun_footprint.txt")
+        if not os.path.exists(stdname):
+            msg = " Footprint: unable to find standard control file kljun_footprint.txt"
+            logger.error(msg)
+            return
+        cfg = pfp_io.get_controlfilecontents(stdname)
+        file_path = os.path.join(os.path.split(nc_file_uri)[0], "")
+        in_filename = os.path.split(nc_file_uri)[1]
+        out_filename = in_filename.replace(".nc", "_kljun.nc")
+        results_filename = in_filename.replace(".nc", "_kljun_results.csv")
+        plot_path = file_path # probably a more sensible way to do this, its staying like this for now.
+        cfg["Files"] = {"file_path": file_path,"plot_path": plot_path, "in_filename": in_filename,
+                        "out_filename": out_filename,"results_file" : results_filename}
+        pfp_footprint.footprint_main(cfg,"kljun_L3")
+        logger.info("Finished kljun et al footprint.")
+        logger.info("")
+
+    except Exception:
+        error_message = " An error occurred while doing footprint, see below for details ..."
+        logger.error(error_message)
+        error_message = traceback.format_exc()
+        logger.error(error_message)
+    main_ui.actionRunCurrent.setDisabled(False)
+    return
+
+def do_utilities_footprint_kormannmeixner_standard(main_ui):
+    """
+    Purpose: To calculate the footprint of the dataset using the Kormann meixner method.
+    Args:
+        main_ui:
+
+    Returns:
+
+    """
+    try:
+        logger.info("Starting the Kljun et al footprint calculation...")
+        logger.info("This does nothing at the moment!")
+
+    except Exception:
+        error_message = " An error occurred while doing footprint, see below for details ..."
+        logger.error(error_message)
+        error_message = traceback.format_exc()
+        logger.error(error_message)
+    main_ui.actionRunCurrent.setDisabled(False)
+    return
+
+
 def do_utilities_ustar_cpd_barr_custom(main_ui):
     """
     Purpose:
