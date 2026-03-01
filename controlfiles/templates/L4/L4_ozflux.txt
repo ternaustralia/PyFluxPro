@@ -10,6 +10,8 @@ level = L4
     climatology = Right click to browse
 [Options]
     MaxGapInterpolate = 3
+    call_mode = interactive
+    show_plots = Yes
 [Drivers]
     [[AH]]
         [[[GapFillFromAlternate]]]

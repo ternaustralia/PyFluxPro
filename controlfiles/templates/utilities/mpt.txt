@@ -14,7 +14,7 @@ level = mpt
     window_size_forward_mode_3 = 10
     window_size_back_mode = 6
     window_size_back_mode_2 = 6
-    window_size_back_mode_3= 6
+    window_size_back_mode_3 = 6
     bootstrapping_times = 100
     dump_dataset = No
     no_bootstrapping = No
@@ -27,6 +27,8 @@ level = mpt
     groupby = 12,1,2;3,4,5;6,7,8;9,10,11
     seasons_group_allow_duplicates = No
     threshold_check = 1
+    call_mode = interactive
+    show_plots = Yes
 [Variables]
     [[NEE]]
         name = Fco2

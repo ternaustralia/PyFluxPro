@@ -31,11 +31,11 @@
     # If 'Annual', then individual climatologies for each year in the data file are prodiced.
     # Length of time for the climatology
     # ====================================================================================================
-    tower_height   = 10
+    tower_height   = 15
     canopy_height  = 5.5
     footprint_size = 500  # length in m of a square around the tower
     num_cells      = 250  # number of cells per length ==> footprint_size / num_cells = grid_resolution
-    Climatology    = 'Annual' #'Daily' #'Hourly' #'Monthly' #'Single' #'Monthly' #'Annual' #
+    Climatology    = Annual #'Daily' #'Hourly' #'Monthly' #'Single' #'Monthly' #'Annual' #
     Cumulative     = False # (default = 'No')
     AreaOfInterest = False  #'Yes' # (default is 'No')
 

@@ -92,8 +92,7 @@ def footprint_main(cf, mode):
     if list_StDate == [] or list_EnDate == []:
         logger.error("No start or end date found.")
     else:
-        logger.info(list_StDate)
-        logger.info(list_EnDate)
+        logger.info("Successfully got start and end date for climatology calculation.")
 
     logger.info(' Preparing footprint climatology calculation ...')
     # !!! Prepare Output netcdf file !!!
@@ -142,6 +141,7 @@ def footprint_main(cf, mode):
     # if plotting to screen      is requested then iplot = 1
     # if plotting to googleEarth is requested then iplot = 2
     iplot = int(cf['General']['iplot'])
+    logger.info("Output file initialised")
     # IF export images in kml format?
     if iplot == 2:  # write kml - format header
         if "out_filename" in cf['Files']:
@@ -200,6 +200,7 @@ def footprint_main(cf, mode):
                                                  sigmav=sigmavt, ustar=ustart, \
                                                  wind_dir=wind_dirt, domain=domaint, dx=None, dy=None, nx=nxt, ny=None, \
                                                  rs=rst, rslayer=1, smooth_data=1, crop=False, pulse=None, verbosity=2)
+                logger.info("Kljun et al climatology successful. ")
                 x = FFP['x_2d']
                 y = FFP['y_2d']
                 f = FFP['fclim_2d']
@@ -260,10 +261,12 @@ def footprint_main(cf, mode):
         if not num[irun] == 0:
             if iplot == 1:
                 # plot on screen and in jpg
+                logger.info("Saving plot to jpg")
                 plotphifield(x, y, ldt[si], ldt[ei], f, fpinfo["site_name"], mode, clevs, imagename,
                              fpinfo['Cumulative'])
             elif iplot == 2:
                 # plot on screen, in jpg and write kml (google earth) file
+                logger.info("writing KML file")
                 kml_write(lon, lat, ldt[si], ldt[ei], f, fpinfo["site_name"], mode, clevs, fi, fpinfo["plot_path"],
                           fpinfo['Cumulative'])
             plot_num = plt.gcf().number
@@ -1000,62 +1003,79 @@ def kml_initialise(fpinfo, fi, mode):
 
 
 def kml_write(lon, lat, zt1, zt2, data, station, mode, clevs, fi, plot_path, i_cum):
-    plot_in = 'Footprint_' + mode + zt1.strftime("%Y%m%d%H%M") + '.png'
-    plotname = plot_path + plot_in
-    width = 5
-    height = width * data.shape[0] / data.shape[1]
-    plt.ioff()
-    plt.figure(figsize=(width, height))
-    cs = plt.contourf(data, clevs, cmap=plt.get_cmap('hsv'), alpha=0.5)  # for full colour images
-    # cs = plt.contour(data,clevs,alpha=0.5) # for contours only
-    plt.axis('off')
-    plt.savefig(plotname, transparent=True)
-    # plt.clf()
-    fn = plt.gcf().number
-    plt.close(fn)
-    # draw a new figure and replot the colorbar there
-    fig, ax = plt.subplots(figsize=(width, height))
-    cbar = plt.colorbar(cs, ax=ax)
-    # =========================================================================
-    # rlevs = [1 - clev for clev in clevs if clev is not None]
-    # cbar.set_ticks(rlevs)
-    cbar.set_ticks(clevs)
-    if i_cum:
-        cbar.set_label('Cumulative footprint contribution in percent')
-    else:
-        cbar.set_label('Percentage of footprint contribution')
-    ax.remove()
-    plt.savefig(plot_path + 'cbar.png', bbox_inches='tight')  # , transparent=True)
-    fn = plt.gcf().number
-    plt.close(fn)
-    plt.ion()
-    # get the lat/lon bounds of the area
-    lon1 = lon[0]
-    lon2 = lon[-1]
-    lat1 = lat[0]
-    lat2 = lat[-1]
-    # Hopefully the file was opened properly and the header written
-    fi.write('<GroundOverlay>\n')
-    fi.write('  <name>' + station + zt2.strftime("%Y%m%d%H%M") + '</name>\n')
-    fi.write('  <bgColor>8fffffff</bgColor>\n')
-    fi.write('  <Icon>\n')
-    fi.write('    <href>' + plot_in + '</href>\n')
-    fi.write('  </Icon>\n')
-    fi.write('  <TimeSpan>\n')
-    fi.write('    <begin>' + zt1.strftime("%Y-%m-%dT%H:%M") + '</begin>\n')
-    fi.write('    <end>' + zt2.strftime("%Y-%m-%dT%H:%M") + '</end>\n')
-    fi.write('  </TimeSpan>\n')
-    fi.write('  <altitude>0.0</altitude>\n')
-    fi.write('  <altitudeMode>clampToGround</altitudeMode>\n')
-    fi.write('  <LatLonBox>\n')
-    fi.write('    <north>' + str(lat2) + '</north>\n')
-    fi.write('    <south>' + str(lat1) + '</south>\n')
-    fi.write('    <east>' + str(lon2) + '</east>\n')
-    fi.write('    <west>' + str(lon1) + '</west>\n')
-    fi.write('    <rotation>0.0</rotation>\n')
-    fi.write('  </LatLonBox>\n')
-    fi.write('</GroundOverlay>\n')
-
+    logger.info(plot_path)
+    logger.info(fi)
+    try:
+        plot_in = 'Footprint_' + mode + zt1.strftime("%Y%m%d%H%M") + '.png'
+        plotname = os.path.join(plot_path , plot_in)
+        logger.info(f"writing to {plotname}")
+        width = 5
+        height = width * data.shape[0] / data.shape[1]
+        #plt.ioff()
+        fig1, ax1 = plt.subplots(figsize=(width, height))
+        cs = ax1.contourf(data, clevs, cmap=plt.get_cmap('hsv'), alpha=0.5)  # for full colour images
+        # cs = plt.contour(data,clevs,alpha=0.5) # for contours only
+        ax1.set_axis_off()
+        fig1.savefig(plotname, transparent=True,format ='png')
+    
+        # plt.clf()
+        #fn = plt.gcf().number
+        #plt.close(fn)
+        logger.info("Made figure.")
+    except Exception as e:
+        logger.error(f"An error occured while plotting the footprint contours: {e}")
+    try:
+    
+        # draw a new figure and replot the colorbar there
+        logger.info("Drawing the colour bar")
+        fig, ax = plt.subplots(figsize=(width, height))
+        cbar = plt.colorbar(cs, ax=ax)
+        # =========================================================================
+        # rlevs = [1 - clev for clev in clevs if clev is not None]
+        # cbar.set_ticks(rlevs)
+        cbar.set_ticks(clevs)
+        if i_cum:
+            cbar.set_label('Cumulative footprint contribution in percent')
+        else:
+            cbar.set_label('Percentage of footprint contribution')
+        ax.remove()
+        fig.savefig(os.path.join(plot_path, 'cbar.png'), bbox_inches='tight',format = 'png')  # , transparent=True)
+        if not os.path.exists(os.path.join(plot_path, 'cbar.png')):
+            logger.warning("File failed to write.")
+    except Exception as e:
+        logger.error(f"An error occured while creating the colour bar and saving the figure: {e}")
+    try:
+        #fn = plt.gcf().number
+        #plt.close(fn)
+        #plt.ion()
+        # get the lat/lon bounds of the area
+        lon1 = lon[0]
+        lon2 = lon[-1]
+        lat1 = lat[0]
+        lat2 = lat[-1]
+        # Hopefully the file was opened properly and the header written
+        fi.write('<GroundOverlay>\n')
+        fi.write('  <name>' + station + zt2.strftime("%Y%m%d%H%M") + '</name>\n')
+        fi.write('  <bgColor>8fffffff</bgColor>\n')
+        fi.write('  <Icon>\n')
+        fi.write('    <href>' + plot_in + '</href>\n')
+        fi.write('  </Icon>\n')
+        fi.write('  <TimeSpan>\n')
+        fi.write('    <begin>' + zt1.strftime("%Y-%m-%dT%H:%M") + '</begin>\n')
+        fi.write('    <end>' + zt2.strftime("%Y-%m-%dT%H:%M") + '</end>\n')
+        fi.write('  </TimeSpan>\n')
+        fi.write('  <altitude>0.0</altitude>\n')
+        fi.write('  <altitudeMode>clampToGround</altitudeMode>\n')
+        fi.write('  <LatLonBox>\n')
+        fi.write('    <north>' + str(lat2) + '</north>\n')
+        fi.write('    <south>' + str(lat1) + '</south>\n')
+        fi.write('    <east>' + str(lon2) + '</east>\n')
+        fi.write('    <west>' + str(lon1) + '</west>\n')
+        fi.write('    <rotation>0.0</rotation>\n')
+        fi.write('  </LatLonBox>\n')
+        fi.write('</GroundOverlay>\n')
+    except Exception as e:
+        logger.error(f"An error occured while plotting the footprint KML: {e}")
 
 def kml_finalise(fpinfo, fi, mode, kmlname):
     # write the footer of the kml file and close the file

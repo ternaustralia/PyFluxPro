@@ -5,7 +5,7 @@ level = batch
     [[L1]]
         0 = Right click to browse
     [[L2]]
-        0 = Right click to browse
+        0 = "C:\Users\Nicola Study\Documents\OzFlux\NSW Hub\Sites\AliceSpringsMulga\ControlFiles\L2_2025_post.txt"
     [[L3]]
         0 = Right click to browse
     [[concatenate]]

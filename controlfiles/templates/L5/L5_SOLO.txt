@@ -11,6 +11,8 @@ level = L5
     TurbulenceFilter = ustar
     DayNightFilter = Fsd
     AcceptDayTimes = Yes
+    call_mode = interactive
+    show_plots = Yes
 [ustar_threshold]
     0 = YYYY-MM-DD hh:mm,YYYY-MM-DD hh:mm,<ustar_threshold>
 [Fluxes]

@@ -63,3 +63,6 @@ Fund.'''
 [EvapoTranspiration]
     [[ET]]
         Fe = Fe
+[Options]
+    call_mode = interactive
+    show_plots = Yes

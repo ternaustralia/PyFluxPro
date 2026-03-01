@@ -4,11 +4,13 @@ level = cpd_mchugh
     in_filename = Right click to browse
     out_filename = Right click to browse
 [Options]
-    Fsd_threshold  = 10
+    Fsd_threshold = 10
     Num_bootstraps = 100
     Output_results = True
-    Output_plots   = True
-    Plot_TClass    = False
+    Output_plots = True
+    Plot_TClass = False
+    call_mode = interactive
+    show_plots = Yes
 [Variables]
     [[Fco2]]
         name = Fco2

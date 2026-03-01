@@ -1,9 +1,7 @@
+level = L4
 [Options]
-    Fsd_threshold  = 5
-    Num_bootstraps = 100
-    Output_results = True
-    Output_plots   = True
-    Plot_TClass    = False
+    call_mode = interactive
+    show_plots = Yes
 [Variables]
     [[Fco2]]
         name = Fco2

@@ -1155,7 +1155,7 @@ def do_utilities_footprint_kljun_standard(main_ui,nc_file_uri):
     main_ui.actionRunCurrent.setDisabled(False)
     return
 
-def do_utilities_footprint_kormannmeixner_standard(main_ui):
+def do_utilities_footprint_kormannmeixner_standard(main_ui,nc_file_uri):
     """
     Purpose: To calculate the footprint of the dataset using the Kormann meixner method.
     Args:
@@ -1165,8 +1165,26 @@ def do_utilities_footprint_kormannmeixner_standard(main_ui):
 
     """
     try:
-        logger.info("Starting the Kljun et al footprint calculation...")
-        logger.info("This does nothing at the moment!")
+        logger.info("Starting the Kormann Meixner footprint calculation...")
+                # get the base path of script or Pyinstaller application
+        base_path = pfp_utils.get_base_path()
+        stdname = os.path.join(base_path, "controlfiles", "standard", "kormei_footprint.txt")
+        if not os.path.exists(stdname):
+            msg = " Footprint: unable to find standard control file kormei_footprint.txt"
+            logger.error(msg)
+            return
+        cfg = pfp_io.get_controlfilecontents(stdname)
+        file_path = os.path.join(os.path.split(nc_file_uri)[0], "")
+        in_filename = os.path.split(nc_file_uri)[1]
+        out_filename = in_filename.replace(".nc", "_kormei.nc")
+        results_filename = in_filename.replace(".nc", "_kormei_results.csv")
+        plot_path = file_path # probably a more sensible way to do this, its staying like this for now.
+        cfg["Files"] = {"file_path": file_path,"plot_path": plot_path, "in_filename": in_filename,
+                        "out_filename": out_filename,"results_file" : results_filename}
+        pfp_footprint.footprint_main(cfg,"kormei_L3")
+        logger.info("Finished Kormann Meixner footprint.")
+        logger.info("")
+        
 
     except Exception:
         error_message = " An error occurred while doing footprint, see below for details ..."

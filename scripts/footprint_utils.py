@@ -21,7 +21,8 @@ import tkinter,tkinter.simpledialog
 import xlrd
 import xlwt
 
-logger = logging.getLogger("footprint_log")
+pfp_log = os.environ["pfp_log"]
+logger = logging.getLogger(pfp_log)
 
 def GetDateIndex(ldt,date,ts=30,default=0,match='exact'):
     """
@@ -173,8 +174,8 @@ def update_progress(progress):
     block = int(round(barLength*progress))
     progress = round(progress,2)
     text = "\rPercent: [{0}] {1}% {2}".format( "#"*block + "-"*(barLength-block), progress*100, status)
-    sys.stdout.write(text)
-    sys.stdout.flush()
+    logger.info(text)
+    #sys.stdout.flush()
 
 def CalculateMoninObukhovLength(ds, fpinfo):
     """
@@ -188,7 +189,7 @@ def CalculateMoninObukhovLength(ds, fpinfo):
     Author: PRI
     Date: April 2018
     """
-    logger.info(' Calculating Monin-Obukhov length')
+    logger.info(' Calculating Monin-Obukhov length...')
     # create a variable dictionary for L
     nrecs = int(ds.globalattributes["nc_nrecs"])
     ldt = GetVariable(ds, "DateTime")
@@ -220,6 +221,7 @@ def CalculateMoninObukhovLength(ds, fpinfo):
     L["Attr"]["standard_name"] = "not defined"
     # put the Monin-Obukhov variable in the data structure
     CreateVariable(ds, L)
+    logger.info("Monin-Obhukov length calculated.")
     return
 
 def z0calc(zm,LM,U_meas,UStar):
@@ -325,8 +327,7 @@ def create_index_list(cf, fpinfo, date):
     logger.info(f"Assessing start and end date of file as {climfreq} climatology")
     # firstly what climatology is requested
     if climfreq == 'Single':
-        #list_StDate = []
-        #list_EnDate = []
+        
         if 'StartDate' in list(cf['Options'].keys()):
             xlStDate = cf['Options']['StartDate']
             list_StDate.append(GetDateIndex(date,xlStDate,ts=fpinfo["flux_period"],default=0,match='exact'))
@@ -408,8 +409,7 @@ def create_index_list(cf, fpinfo, date):
         EnDate = date[lastIdx]
         sm = pandas.date_range(start=str(StDate), end=str(EnDate), freq='MS', normalize=True)    # frequency monthly
         num_int = len(sm)
-        #list_StDate = []
-        #list_EnDate = []
+        
         test_i = GetDateIndex(date,sm[0],ts=fpinfo["flux_period"],default=0,match='exact')
         if test_i > 0:
             list_StDate.append(0)
@@ -431,7 +431,7 @@ def create_index_list(cf, fpinfo, date):
         # Find number of years in df
         StDate = date[0]
         EnDate = date[-1]
-        logger.info(f'Start date is {str(StDate)} and End date is {str(EnDate)}')
+
         years_index = []
         #date.apply(lambda x: x.year)
         #for i in range(min(year),max(year)+1):
@@ -440,9 +440,6 @@ def create_index_list(cf, fpinfo, date):
         num = len(years_index)
         years_index.append(max(years_index)+1)
         logger.info(f"{num} years found in netcdf file")
-
-        #list_StDate = []
-        #list_EnDate = []
         st = datetime.datetime(years_index[0],1,1,0,0)
         en = datetime.datetime(years_index[1],1,1,0,0)
         list_StDate.append(GetDateIndex(date,st,ts=fpinfo["flux_period"],default=0,match='exact'))
@@ -461,8 +458,11 @@ def create_index_list(cf, fpinfo, date):
             if test_ie - test_is > 2:
                 list_StDate.append(test_is+1)
                 list_EnDate.append(test_ie)
-        logger.info(list_StDate)
-        logger.info(list_EnDate)
+        logger.info(f"Start date is:{list_StDate}")
+        logger.info(f"End date is:{list_EnDate}")
+
+    else:
+        logger.error("Climatology mode not recognised. Start and End date could not be determined. ")
     return list_StDate,list_EnDate
 
 def get_keyvaluefromcf(cf,sections,key,default=None,mode="quiet"):

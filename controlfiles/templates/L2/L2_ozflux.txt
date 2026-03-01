@@ -9,6 +9,8 @@ level = L2
     sonic_type = CSAT3
     SONIC_Check = Yes
     IRGA_Check = Yes
+    call_mode = interactive
+    show_plots = Yes
 [Variables]
     [[AGC_IRGA]]
         [[[RangeCheck]]]

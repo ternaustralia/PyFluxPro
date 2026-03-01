@@ -8,6 +8,8 @@ level = L3
     zms = <height>
     CO2Units = umol/mol
     Fco2Units = umol/m^2/s
+    call_mode = interactive
+    show_plots = Yes
 [Soil]
     FgDepth = <depth>
     BulkDensity = <bulk_density>

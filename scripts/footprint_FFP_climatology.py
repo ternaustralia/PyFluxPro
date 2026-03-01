@@ -1,5 +1,20 @@
 import logging
 import os
+import numpy as np
+import sys
+import numbers
+from scipy import signal as sg
+import footprint_utils    
+import numpy as np
+import sys
+import numbers
+from scipy import signal as sg
+import footprint_utils
+from numpy import ma
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+from matplotlib.colors import LogNorm
+
 pfp_log = os.environ["pfp_log"]
 logger = logging.getLogger(pfp_log)
 
@@ -85,11 +100,7 @@ def FFP_climatology(fpinfo, time=None, zm=None, z0=None, umean=None, h=None, ol=
     Copyright (C) 2015, 2016, 2017, 2018 Natascha Kljun
     """
 
-    import numpy as np
-    import sys
-    import numbers
-    from scipy import signal as sg
-    import footprint_utils
+
 
     # ================================================================================
     # initialise counter for exception messages
@@ -351,8 +362,8 @@ def FFP_climatology(fpinfo, time=None, zm=None, z0=None, umean=None, h=None, ol=
 
             # ===========================================================================
             # Add to footprint climatology raster
-            fclim_2d = fclim_2d + f_2d;
-
+            fclim_2d = fclim_2d + f_2d
+    logger.info("Calculated footprints from available data. ")
     # ===========================================================================
     # Continue if at least one valid footprint was calculated
     n = sum(valids)
@@ -365,13 +376,14 @@ def FFP_climatology(fpinfo, time=None, zm=None, z0=None, umean=None, h=None, ol=
 
         # ===========================================================================
         # Normalize and smooth footprint climatology
-        fclim_2d = fclim_2d / n;
-        # logger.info("Number of valid footprints = "+str(n))
+        fclim_2d = fclim_2d / n
+        logger.info("Number of valid footprints = "+str(n))
 
         if smooth_data is not None:
+            logger.info("Convolving ..,")
             skernel = np.matrix('0.05 0.1 0.05; 0.1 0.4 0.1; 0.05 0.1 0.05')
-            fclim_2d = sg.convolve2d(fclim_2d, skernel, mode='same');
-            fclim_2d = sg.convolve2d(fclim_2d, skernel, mode='same');
+            fclim_2d = sg.convolve2d(fclim_2d, skernel, mode='same')
+            fclim_2d = sg.convolve2d(fclim_2d, skernel, mode='same') #seems to be duplicate?intentional?
 
         # Finally print the stats for exception messages, fatal exceptions already resulted in aborting program
         raise_ffp_exception(0, verbosity, counter, msgstring)
@@ -379,6 +391,7 @@ def FFP_climatology(fpinfo, time=None, zm=None, z0=None, umean=None, h=None, ol=
         # ===========================================================================
         # Derive footprint ellipsoid incorporating R% of the flux, if requested,
         # starting at peak value.
+        logger.info("Deriving footprint ellipsoid")
         if rs is not None:
             clevs = get_contour_levels(fclim_2d, dx, dy, rs)
             frs = [item[2] for item in clevs]
@@ -436,12 +449,15 @@ def FFP_climatology(fpinfo, time=None, zm=None, z0=None, umean=None, h=None, ol=
 
         # ===========================================================================
         # Plot footprint
-        if fig:
+        if fig == True:
+            logger.info("Plotting footprint.")
             fig_out, ax = plot_footprint(x_2d=x_2d, y_2d=y_2d, fs=fclim_2d,
                                          show_footprint=True, clevs=frs)
 
     # ===========================================================================
     # Fill output structure
+
+    logger.info("Filling output structure.")
     if rs is not None:
         return {'x_2d': x_2d, 'y_2d': y_2d, 'fclim_2d': fclim_2d,
                 'rs': rs, 'fr': frs, 'xr': xrs, 'yr': yrs, 'n': n, 'flag_err': flag_err}
@@ -467,7 +483,7 @@ def check_ffp_inputs(ustar, sigmav, h, ol, wind_dir, zm, z0, umean, rslayer, ver
         raise_ffp_exception(5, verbosity, counter, msgstring)
         return False
     if z0 is not None and umean is None and zm <= 12.5 * z0:
-        if rslayer is 1:
+        if rslayer == 1:
             raise_ffp_exception(6, verbosity, counter, msgstring)
         else:
             raise_ffp_exception(20, verbosity, counter, msgstring)
@@ -494,11 +510,7 @@ def check_ffp_inputs(ustar, sigmav, h, ol, wind_dir, zm, z0, umean, rslayer, ver
 # ===============================================================================
 def get_contour_levels(f, dx, dy, rs=None):
     '''Contour levels of f at percentages of f-integral given by rs'''
-
-    import numpy as np
-    from numpy import ma
-    import sys
-
+    logger.info("Getting contour levels...")
     # Check input and resolve to default levels in needed
     if not isinstance(rs, (int, float, list)):
         rs = list(np.linspace(0.10, 0.90, 9))
@@ -538,7 +550,7 @@ def get_contour_vertices(x, y, f, lev):
     #
     # return [xr, yr]   # x,y coords of contour points.
     # import matplotlib._contour as cntr
-    import matplotlib.pyplot as plt
+    logger.info("Getting contour vertices ...")
 
     cs = plt.contour(x, y, f, [lev])
     plt.close()
@@ -550,6 +562,8 @@ def get_contour_vertices(x, y, f, lev):
             y.min() >= min(segs[:, 1]) or max(segs[:, 1]) >= y.max():
         return [None, None]
 
+    logger.info("Got contour vertices. ")
+
     return [xr, yr]  # x,y coords of contour points.
 
 
@@ -557,11 +571,8 @@ def get_contour_vertices(x, y, f, lev):
 def plot_footprint(x_2d, y_2d, fs, clevs=None, show_footprint=True, normalize=None,
                    colormap=None, line_width=0.5, iso_labels=None):
     '''Plot footprint function and contours if request'''
+    logger.info("Plotting footprint...")
 
-    import numpy as np
-    import matplotlib.pyplot as plt
-    import matplotlib.cm as cm
-    from matplotlib.colors import LogNorm
 
     # If input is a list of footprints, don't show footprint but only contours,
     # with different colors
@@ -575,6 +586,7 @@ def plot_footprint(x_2d, y_2d, fs, clevs=None, show_footprint=True, normalize=No
     cs = [colormap(ix) for ix in np.linspace(0, 1, len(fs))]
 
     # Initialize figure
+    logger.info("initialising figures...")
     fig, ax = plt.subplots(figsize=(12, 10))
     # fig.patch.set_facecolor('none')
     # ax.patch.set_facecolor('none')
@@ -624,8 +636,8 @@ def plot_footprint(x_2d, y_2d, fs, clevs=None, show_footprint=True, normalize=No
         # Colorbar
         cbar = fig.colorbar(im, shrink=1.0, format='%.3e')
         # cbar.set_label('Flux contribution', color = 'k')
-    plt.show()
-
+    #plt.show() not showing the figure but it will be saved.
+    logger.info("Finished plotting footprint.")
     return fig, ax
 
 
