@@ -262,14 +262,18 @@ def EcoResp(ds, l6_info, called_by, xl_writer):
         # return if no fit parameters found
         if params_df is None:
             return
-        ER["Data"] = numpy.ma.array(ptc.estimate_er_time_series(params_df), copy=True)
+        # 2026-04-23 PRI dealing with the interface between pandas and numpy,
+        # force dtype=object to dtype=float64.
+        cleaned = pandas.to_numeric(ptc.estimate_er_time_series(params_df), errors='coerce')
+        ER["Data"] = numpy.ma.masked_invalid(cleaned)
+        #ER["Data"] = numpy.ma.array(ptc.estimate_er_time_series(params_df), copy=True)
         ER["Flag"] = numpy.tile(30, len(ER["Data"]))
         # Write ER to data structure
         drivers = iel["outputs"][output]["drivers"]
         ER["Attr"]["comment1"] = "Drivers were {}".format(str(drivers))
         pfp_utils.CreateVariable(ds, ER)
         # Write to excel
-        params_df.to_excel(xl_writer, output)
+        params_df.to_excel(xl_writer, sheet_name=output)
         xl_writer.close()
         # Do plotting
         startdate = str(ds.root["Variables"]["DateTime"]["Data"][0])

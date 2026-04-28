@@ -553,6 +553,8 @@ def sort(df, flux_period, years_index, i):
     years_df['seasons'] = [years_df.loc[j, 'Fco2_count']/(bin_size//2)-1 for j in years_df.index]
     years_df['seasons'].fillna(0, inplace=True)
     years_df['seasons'] = np.where(years_df['seasons'] < 0, 0, years_df['seasons'])
+    # 2026-04-24 PRI replace NaN with 0 so that astype(int) will work in pamdas 3+.
+    years_df.fillna(0, inplace=True)
     years_df['seasons'] = years_df['seasons'].astype(int)
     if np.all(years_df['seasons'] <= 0):
         logger.error('No years with sufficient data for evaluation, exiting...')
