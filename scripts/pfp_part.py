@@ -253,7 +253,7 @@ class partition(object):
                 # delete the attribute
                 delattr(self, "LL_fignum")
         E0_results = pd.DataFrame.from_dict(self.results["E0"], orient="index")
-        E0_results.to_excel(self.xl_writer, "E0 results")
+        E0_results.to_excel(self.xl_writer, sheet_name="E0 results")
         if len(Eo_list) == 0:
             msg = "***** Could not find any valid estimates of E0, exiting..."
             logger.warning(msg)
@@ -359,8 +359,11 @@ class partition(object):
         out_df = pd.DataFrame(result_list, index = date_list)
         out_df = out_df.resample('D').interpolate()
         out_df = out_df.reindex(np.unique(self.df.index.date))
-        out_df.fillna(method = 'bfill', inplace = True)
-        out_df.fillna(method = 'ffill', inplace = True)
+        # 2026-04-28 PRI changes for pandas 2+ to pandas 3+
+        #out_df.fillna(method = 'bfill', inplace = True)
+        out_df.bfill(inplace = True)
+        #out_df.fillna(method = 'ffill', inplace = True)
+        out_df.ffill(inplace = True)
         return out_df.join(flag)
     #--------------------------------------------------------------------------
 

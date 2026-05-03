@@ -13,8 +13,8 @@ dependencies:
   - pandas
   - pyqt
   - pytz
-  - scipy<=1.15.3
-  - statsmodels==0.14.4
+  - scipy
+  - statsmodels
   - timezonefinder
   - windrose
   - xarray
