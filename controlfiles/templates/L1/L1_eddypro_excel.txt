@@ -7,9 +7,9 @@ level = L1
     out_filename = Right click to browse (*.nc)
 [Global]
     Conventions = CF-1.8
-    acknowledgement = '''This work used eddy covariance data collected by the TERN Ecosystem
-Processes facility. Ecosystem Processes would like to acknowledge the financial support of the
-Australian Federal Government via the National Collaborative Research Infrastructure Scheme
+    acknowledgement = '''This work used eddy covariance data collected by the TERN Ecosystem 
+Processes facility. Ecosystem Processes would like to acknowledge the financial support of the 
+Australian Federal Government via the National Collaborative Research Infrastructure Scheme 
 and the Education Investment Fund.'''
     altitude = <altitude>m
     canopy_height = <canopy_height>m
@@ -487,3 +487,6 @@ and the Education Investment Fund.'''
         [[[xl]]]
             name = u*
             sheet = full_output
+[Options]
+    call_mode = interactive
+    show_plots = Yes
