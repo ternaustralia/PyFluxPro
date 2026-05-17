@@ -437,7 +437,8 @@ def do_EC155check(cf, ds, code=4):
         logger.warning(msg)
     # check if we have the H2O and CO2 signal strengths
     got_signal = False
-    for signal in ["CO2Sig_IRGA", "H2OSig_IRGA", "Signal_Av", "Signal_H2O", "Signal_CO2"]:
+    for signal in ["CO2Sig_IRGA", "H2OSig_IRGA", "SigCO2_IRGA", "SigH2O_IRGA",
+                   "Signal_Av", "Signal_H2O", "Signal_CO2"]:
         if signal in labels:
             got_signal = True
             conditionals.append(signal)
@@ -705,6 +706,7 @@ def do_li7500check(cf, ds, code=4):
     # check if we have the H2O and CO2 signal strengths
     got_signal = False
     for signal in ["CO2Sig_IRGA", "H2OSig_IRGA",
+                   "SigCO2_IRGA", "SigH2O_IRGA",
                    "Signal_Av", "Signal_H2O", "Signal_CO2",
                    "Sig_IRGA", "Sig_IRGA_Av",
                    "AGC_7500", "AGC_IRGA"]:
