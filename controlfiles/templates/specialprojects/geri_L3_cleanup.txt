@@ -1,0 +1,33 @@
+level = L3
+[Files]
+    file_path = Right click to browse
+    in_filename = Right click to browse (*.nc)
+    out_filename = Right click to browse (*.nc)
+    plot_path = Right click to browse
+[Options]
+    CO2Units = umol/mol
+    CalculateFluxes = No
+    CorrectFgForStorage = No
+    Fco2Units = umol/m^2/s
+    call_mode = interactive
+    show_plots = Yes
+[Variables]
+    [[Precip]]
+        [[[RangeCheck]]]
+            lower = 0
+            upper = 30
+    [[Sws]]
+        [[[RangeCheck]]]
+            lower = 0
+            upper = 0.5
+    [[Ta]]
+        [[[RangeCheck]]]
+            lower = 0
+            upper = 50
+    [[Ts]]
+        [[[RangeCheck]]]
+            lower = 0
+            upper = 60
+[Plots]
+    [[GERI-AccelNet]]
+        variables = Precip,Sws,Ta,Ts
