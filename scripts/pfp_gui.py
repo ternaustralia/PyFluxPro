@@ -3538,18 +3538,24 @@ class edit_cfg_L2(QtWidgets.QWidget):
         return
 
     def pick_excludedaterange(self):
+        """
+        Function to display variable as a time series in a separate window and
+        allow the user to select individual points or ranges of points
+        to be removed by the ExcludeDates QC function.  Selected points or
+        ranges are written back to the control file.
+        """
         self.cfg = self.get_data_from_model()
         nc_uri = os.path.join(self.cfg["Files"]["file_path"], self.cfg["Files"]["in_filename"])
-        logger.info(" calling NetCDFRead from edit_cfg_L2")
+        logger.debug(" calling NetCDFRead from edit_cfg_L2")
         self.ds = pfp_io.NetCDFRead(nc_uri)
         # get the selected variable
         idx = self.view.selectedIndexes()[0]
         selected_item = idx.model().itemFromIndex(idx)
         parent = selected_item.parent()
-        label =  parent.text()
+        label = parent.text()
         pfp_ck.do_qcchecks_oneseries(self.cfg, self.ds, "Variables", label)
         self.var = pfp_utils.GetVariable(self.ds, label)
-        self.qc_dialog =  pick_exclude_date_range(self.var, parent=self)
+        self.qc_dialog = pick_exclude_date_range(self.var, parent=self)
         if self.qc_dialog.exec_():
             #print(self.qc_dialog.deletion_log)
             delete_points = self.qc_dialog.deletion_log
@@ -5028,15 +5034,18 @@ class edit_cfg_L3(QtWidgets.QWidget):
         ranges are written back to the control file.
         """
         self.cfg = self.get_data_from_model()
+        nc_uri = os.path.join(self.cfg["Files"]["file_path"], self.cfg["Files"]["in_filename"])
+        logger.debug(" calling NetCDFRead from edit_cfg_L3")
+        self.ds = pfp_io.NetCDFRead(nc_uri)
         # get the selected variable
         idx = self.view.selectedIndexes()[0]
         selected_item = idx.model().itemFromIndex(idx)
         parent = selected_item.parent()
-        label =  parent.text()
+        label = parent.text()
         pfp_ts.CombineSeries(self.cfg, self.ds, label)
         pfp_ck.do_qcchecks_oneseries(self.cfg, self.ds, "Variables", label)
         self.var = pfp_utils.GetVariable(self.ds, label)
-        self.qc_dialog =  pick_exclude_date_range(self.var, parent=self)
+        self.qc_dialog = pick_exclude_date_range(self.var, parent=self)
         if self.qc_dialog.exec_():
             #print(self.qc_dialog.deletion_log)
             delete_points = self.qc_dialog.deletion_log
