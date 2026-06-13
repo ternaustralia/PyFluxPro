@@ -3473,7 +3473,7 @@ def nc_write_var(ncFile, ds, ThisOne, dim):
     dt = get_ncdtype(ds.root["Variables"][ThisOne]["Data"])
     # create the netCDF variable
     try:
-        ncVar = ncFile.createVariable(ThisOne, dt, dim)
+        ncVar = ncFile.createVariable(ThisOne, dt, dim, fill_value=float(c.missing_value))
     except RuntimeError:
         msg = "Error writing variable to netCDF file: "+ThisOne
         raise Exception(msg)
