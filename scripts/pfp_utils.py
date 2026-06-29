@@ -1155,6 +1155,11 @@ def convert_csv_string_to_list(input_string):
         output_list = [input_string]
     return output_list
 
+def convert_list_to_csv_string(input_list):
+    """ Convert a list containing items to a string with items separated by commas."""
+    output_string = ",".join(str(item) for item in input_list)
+    return output_string
+
 def convert_WSWDtoUV(WS, WD):
     """
     Purpose:
