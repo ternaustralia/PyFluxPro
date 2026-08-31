@@ -45,6 +45,17 @@ log_file_name = log_file_base + ".log"
 log_file_name = os.path.join(logfiles_path, log_file_name)
 logger = pfp_log.CreateLogger(log_file_base, log_file_name=log_file_name)
 
+template = {}
+template_folder = 'controlfiles/templates'
+for entry in os.listdir(template_folder):
+    entry_path = os.path.join(template_folder, entry)
+    template[entry] = {}
+    for file in os.listdir(entry_path):
+        full_path = os.path.join(entry_path, file)
+        action_name = file.rsplit('.', 1)[0].replace('_', ' ')
+        template[entry].update({action_name: full_path})
+
+
 class pfp_main_ui(QWidget):
     def __init__(self, pfp_version, textBox):
         super(pfp_main_ui, self).__init__()
@@ -55,6 +66,8 @@ class pfp_main_ui(QWidget):
         # File menu
         self.menuFile = QMenu(self.menubar)
         self.menuFile.setTitle("File")
+        # New file submenu
+        self.easy_access_template(template, self.menuFile)
         # File/Convert submenu
         self.menuFileConvert = QMenu(self.menuFile)
         self.menuFileConvert.setTitle("Convert")
@@ -279,6 +292,29 @@ class pfp_main_ui(QWidget):
         self.l4_ui = pfp_gui.pfp_l4_ui(self)
         # add the L5 GUI
         self.solo_gui = pfp_gui.solo_gui(self)
+    
+    def easy_access_template(self, dic, anchor):
+        # New file from template submenu
+        self.menuFileNew = QMenu(anchor)
+        self.menuFileNew.setTitle("New")
+
+        self.menuFileNewLevel = []
+        self.menuFileNewAction = []
+
+        for level, file in dic.items():
+            thisMenu = QMenu(self.menuFileNew)
+            thisMenu.setTitle(level)
+
+            for name, path in file.items():
+                thisAction = QAction(self)
+                thisAction.setText(name)
+                thisAction.triggered.connect(lambda *a, p=path: self.file_open(
+                    p))
+                thisMenu.addAction(thisAction)
+                self.menuFileNewAction += [thisAction]
+            
+            self.menuFileNew.addAction(thisMenu.menuAction())
+            self.menuFileNewLevel += [thisMenu]
 
     def application_quit(self):
         # 20250629 PRI
