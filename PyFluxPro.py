@@ -34,9 +34,10 @@ warnings.filterwarnings("ignore", category=Warning)
 
 # now check the logfiles and plots directories are present
 base_path = pfp_utils.get_base_path()
-logfiles_path = os.path.join(base_path, "logfiles", "")
-plots_path = os.path.join(base_path, "plots", "")
-dir_list = [logfiles_path, plots_path]
+# Create logfiles folder on current directory, so that this can be outside
+# the PyFluxPro folder.
+logfiles_path = os.path.join(os.path.abspath("."), "logfiles")
+dir_list = [logfiles_path]
 for item in dir_list:
     if not os.path.exists(item):
         os.makedirs(item)

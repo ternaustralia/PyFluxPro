@@ -2058,8 +2058,9 @@ def get_base_path():
         base_path = sys._MEIPASS
     else:
         # running as a script
-        base_path = os.path.abspath(".")
-    return base_path
+        #base_path = os.path.abspath(".")
+        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    return base_path    
 
 def get_cfsection(cf, label, mode='quiet'):
     '''
