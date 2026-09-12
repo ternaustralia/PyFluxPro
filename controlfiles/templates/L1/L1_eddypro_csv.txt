@@ -446,3 +446,6 @@ and the Education Investment Fund.'''
             units = m/s
         [[[csv]]]
             name = u*
+[Options]
+    call_mode = interactive
+    show_plots = Yes
