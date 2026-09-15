@@ -3005,6 +3005,11 @@ class edit_cfg_L2(QtWidgets.QWidget):
                         self.context_menu.actionSetSonicTypeCSAT3B.setText("CSAT3B")
                         self.context_menu.addAction(self.context_menu.actionSetSonicTypeCSAT3B)
                         self.context_menu.actionSetSonicTypeCSAT3B.triggered.connect(self.set_sonic_csat3b)
+                    if existing_entry != "IRGASON":
+                        self.context_menu.actionSetSonicTypeIRGASON = QtWidgets.QAction(self)
+                        self.context_menu.actionSetSonicTypeIRGASON.setText("IRGASON")
+                        self.context_menu.addAction(self.context_menu.actionSetSonicTypeIRGASON)
+                        self.context_menu.actionSetSonicTypeIRGASON.triggered.connect(self.set_sonic_irgason)
                 elif key in ["SONIC_Check", "IRGA_Check"]:
                     existing_entry = str(parent.child(selected_item.row(),1).text())
                     if existing_entry != "Yes":
@@ -3509,6 +3514,13 @@ class edit_cfg_L2(QtWidgets.QWidget):
         selected_item = idx.model().itemFromIndex(idx)
         parent = selected_item.parent()
         parent.child(selected_item.row(), 1).setText("CSAT3B")
+
+    def set_sonic_irgason(self):
+        """ Set the sonic type to IRGASON."""
+        idx = self.view.selectedIndexes()[0]
+        selected_item = idx.model().itemFromIndex(idx)
+        parent = selected_item.parent()
+        parent.child(selected_item.row(), 1).setText("IRGASON")
 
     def update_tab_text(self):
         """ Add an asterisk to the tab title text to indicate tab contents have changed."""

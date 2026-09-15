@@ -2538,7 +2538,8 @@ def netcdf_concatenate_variable_attributes(ds_out, attr_out, info):
                 else:
                     pass
                 # update the variable attribute in the data structure
-                ds_out.root["Variables"][label]["Attr"][attr] = ",".join(attrs)
+                attr_str = pfp_utils.convert_list_to_csv_string(attrs)
+                ds_out.root["Variables"][label]["Attr"][attr] = attr_str
     return
 
 def netcdf_concatenate_read_input_files(info):
